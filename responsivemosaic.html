@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Stingray Intranet</title>
+  <style>
+    :root{
+      /* Cursor position (updated by JS) */
+      --mx: 50%;
+      --my: 50%;
+
+      /* Blue palette */
+      --b0: #001b4d; /* deep */
+      --b1: #002c73; /* brand base */
+      --b2: #004aae; /* royal */
+      --b3: #0070d1; /* bright accent */
+
+      --text:#ffffff;
+      --shadow: 0 2px 6px rgba(0,0,0,0.65);
+
+      /* Responsive rhythm */
+      --space-xs: clamp(6px, 0.8vw, 10px);
+      --space-sm: clamp(10px, 1.2vw, 14px);
+      --space-md: clamp(16px, 2vw, 24px);
+      --space-lg: clamp(20px, 3vw, 36px);
+      --radius: 12px;
+      --control-h: clamp(40px, 5.2vw, 46px);
+      --input-w: min(360px, 76vw);
+
+      /* Layout tuning */
+      --gutter: clamp(12px, 2.2vw, 28px);
+      --grid-gap: clamp(12px, 1.8vw, 18px);
+      --tile-min: clamp(190px, 18vw, 320px);
+      --tile-radius: clamp(10px, 1.2vw, 14px);
+      --tile-pad: clamp(3px, 0.6vw, 5px);
+      --label-size: clamp(14px, 1.4vw, 18px);
+      --label-pad: clamp(8px, 1.2vw, 12px);
+    }
+
+    html, body { height:100%; }
+    body{
+      margin:0;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol", sans-serif;
+      background: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Shared interactive multi-gradient background (used on welcome + page header strip) */
+    .blue-glow{
+      background:
+        radial-gradient(500px circle at var(--mx) var(--my),
+          rgba(0,112,209,0.70) 0%,
+          rgba(0,74,174,0.55) 35%,
+          rgba(0,0,0,0.00) 60%),
+        radial-gradient(900px circle at var(--mx) calc((var(--my) + 14%)),
+          rgba(0,74,174,0.45) 0%,
+          rgba(0,44,115,0.35) 45%,
+          rgba(0,0,0,0.00) 80%),
+        radial-gradient(1200px circle at calc((var(--mx) + 12%)) calc((var(--my) - 8%)),
+          rgba(0,44,115,0.35) 0%,
+          rgba(0,0,0,0.00) 60%),
+        linear-gradient(135deg, var(--b0) 0%, var(--b1) 40%, var(--b2) 70%, var(--b0) 100%);
+      background-repeat: no-repeat;
+      background-size: cover;
+      box-shadow: inset 0 0 180px rgba(0,0,0,0.25);
+    }
+
+    /* ===== Welcome (full screen) ===== */
+    .welcome{
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: var(--space-lg);
+      z-index: 50;
+    }
+
+    .welcome-inner{
+      width:100%;
+      max-width: min(1000px, 92vw);
+      text-align:center;
+    }
+
+    h1{
+      margin:0 0 var(--space-sm) 0;
+      font-size: clamp(30px, 6vw, 62px);
+      line-height:1.08;
+      letter-spacing: .2px;
+      text-shadow: 0 1px 0 #000, 0 2px 0 #000, 0 3px 10px rgba(0,0,0,.5);
+      font-weight: 850;
+    }
+
+    .sub{
+      font-size: clamp(16px, 2.6vw, 22px);
+      margin:0 0 var(--space-md) 0;
+      text-shadow: var(--shadow);
+      opacity:.98;
+    }
+
+    .name-editor{
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: rgba(255,255,255,0.08);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .name-editor input{
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      padding: 0 var(--space-sm);
+      border-radius: calc(var(--tile-radius) - 2px);
+      outline: none;
+      width: var(--input-w);
+      height: var(--control-h);
+      font-size: clamp(14px, 2.4vw, 16px);
+    }
+    .name-editor button{
+      background: #ffffff;
+      color: #002C73;
+      border: none;
+      padding: 0 var(--space-md);
+      border-radius: calc(var(--tile-radius) - 2px);
+      font-weight: 750;
+      cursor: pointer;
+      height: var(--control-h);
+      font-size: clamp(14px, 2.4vw, 16px);
+    }
+    .name-editor button:hover{ filter: brightness(.92); }
+
+    .sr-only{
+      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip: rect(0,0,1px,1px); white-space:nowrap; border:0;
+    }
+
+    @media (prefers-reduced-motion: no-preference){
+      .fade-in{ animation: fade .5s ease-out both; }
+      @keyframes fade{ from{ opacity:0; transform: translateY(8px) } to{ opacity:1; transform: translateY(0) } }
+    }
+    @media (prefers-reduced-motion: reduce){
+      :root{ --mx:50%; --my:45%; }
+    }
+
+    /* ===== Main layout (banner + tiles) ===== */
+    .app{
+      min-height: 100vh;
+      background: #ffffff;
+      color: #111;
+    }
+
+    .banner{
+      position: relative;
+      z-index: 5;
+      color: #fff;
+      padding: clamp(18px, 4.5vh, 44px) var(--gutter);
+      min-height: clamp(170px, 23vh, 260px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .banner-row{
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .banner-title{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(10px, 1.2vw, 14px);
+      flex-wrap: wrap;
+      font-size: clamp(26px, 4.2vw, 52px);
+      font-weight: 900;
+      letter-spacing: .2px;
+      text-shadow: 0 1px 0 rgba(0,0,0,.75), 0 3px 14px rgba(0,0,0,.45);
+      line-height: 1.05;
+      text-wrap: balance;
+      padding: 0 2px;
+    }
+
+    .name-wrap{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .name-inline{
+      font-weight: 900;
+      text-decoration: none;
+      border: none;
+    }
+
+    .pencil-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor:pointer;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding:0;
+      transition: background .18s ease, transform .12s ease, opacity .18s ease, visibility .18s ease;
+    }
+    .pencil-btn:hover{ background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+
+    .pencil-icon{
+      width: 14px;
+      height: 14px;
+      display:inline-block;
+      background: linear-gradient(135deg, #ffd54f 0 60%, #c49000 60% 100%);
+      transform: rotate(45deg);
+      border-radius: 2px 2px 2px 0;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.4) inset;
+    }
+    .pencil-icon::after{
+      content:"";
+      position:absolute;
+      right:-3px; top:calc(50% - 2px);
+      width: 6px;
+      height: 6px;
+      background:#ddd;
+      border-radius:1px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.3) inset;
+    }
+
+    @media (hover:hover){
+      .pencil-btn{ opacity:0; visibility:hidden; }
+      .name-wrap:hover .pencil-btn{ opacity:1; visibility:visible; }
+    }
+    @media (hover:none){
+      .pencil-btn{ opacity:1; visibility:visible; }
+      .tile:hover{ transform:none; }
+    }
+
+    .content{
+      padding: var(--gutter);
+    }
+
+    .tile-container{
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(var(--tile-min), 1fr));
+      gap: var(--grid-gap);
+    }
+
+    @media (max-width: 700px){
+      .banner{ padding: 28px 14px; min-height: 200px; }
+      .content{ padding: 16px 14px; }
+      .tile-container{ grid-template-columns: repeat(auto-fit, minmax(clamp(160px, 48vw, 220px), 1fr)); gap: clamp(10px, 2vw, 14px); }
+    }
+
+    .tile{
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--tile-radius);
+      aspect-ratio: 16 / 9;
+      cursor: pointer;
+      padding: var(--tile-pad);
+      background: linear-gradient(270deg, #002C73, transparent, #002C73);
+      background-size: 400% 400%;
+      animation: borderFlow 6s linear infinite;
+      transition: transform 0.25s ease;
+    }
+    .tile:hover{ transform: scale(1.02); }
+
+    @keyframes borderFlow{
+      0%{ background-position: 0% 50%; }
+      50%{ background-position: 100% 50%; }
+      100%{ background-position: 0% 50%; }
+    }
+
+    .tile-content{
+      position: relative;
+      height: 100%;
+      width: 100%;
+      border-radius: calc(var(--tile-radius) - 2px);
+      overflow: hidden;
+      background-color: #fff;
+    }
+    .tile-content img{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: calc(var(--tile-radius) - 2px);
+      transition: opacity 0.3s ease;
+    }
+    .image-hover{ opacity: 0; }
+    .tile:hover .default-image{ opacity: 0; }
+    .tile:hover .image-hover{ opacity: 1; }
+
+    .tile-label{
+      position: absolute;
+      bottom: var(--label-pad);
+      left: var(--label-pad);
+      z-index: 5;
+      font-size: var(--label-size);
+      font-weight: 800;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+      pointer-events: none;
+    }
+
+    a.tile-link{
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    /* Small hint text under banner (optional, hidden by default) */
+    .banner-hint{
+      width: 100%;
+      margin: 6px 0 0;
+      font-size: clamp(13px, 2vw, 18px);
+      opacity: .95;
+      text-shadow: 0 1px 10px rgba(0,0,0,.4);
+    }
+
+  
+    .divider{
+      height: 1px;
+      background: rgba(0,0,0,0.18);
+      width: 100%;
+    }
+  
+    @media (min-width: 1600px){
+      :root{ --tile-min: clamp(220px, 14vw, 340px); --grid-gap: clamp(14px, 1.2vw, 20px); }
+    }
+
+    @media (max-height: 700px){
+      .banner{ min-height: clamp(150px, 20vh, 220px); }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .tile{ animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- FULL-SCREEN WELCOME (only shown if name not saved OR when editing) -->
+  <section id="welcome" class="welcome blue-glow fade-in" role="dialog" aria-modal="true" aria-label="Welcome">
+    <div class="welcome-inner" role="main" aria-live="polite">
+      <h1>Welcome</h1>
+      <p class="sub">Enter your name once and we’ll remember it for next time.</p>
+
+      <div class="name-editor" aria-label="Add your name section">
+        <label class="sr-only" for="nameInput">Your name</label>
+        <input id="nameInput" type="text" placeholder="Add your name" inputmode="text" autocomplete="name" />
+        <button id="saveBtn" type="button">Enter</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN APP (banner + tiles) -->
+  <div id="app" class="app" hidden>
+    <header class="banner blue-glow">
+      <div class="banner-row">
+        <div class="banner-title">
+          <span>Welcome</span>
+          <span class="name-wrap">
+            <span id="userName" class="name-inline">User</span>
+            <button id="editBtn" class="pencil-btn" type="button" aria-label="Edit your name" title="Edit your name">
+              <span class="pencil-icon" aria-hidden="true"></span>
+            </button>
+          </span>
+        </div>
+      </div>
+      <div class="banner-hint" aria-hidden="true">What do you need help with today?</div>
+    </header>
+    <div class="divider" aria-hidden="true"></div>
+
+    <main class="content">
+      <div class="tile-container">
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/IT-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/it.png" class="default-image" alt="IT Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/it-hover.png" class="image-hover" alt="IT Department hover">
+              <div class="tile-label">IT Department</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Team-Selection.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/admin.png" class="default-image" alt="Admin Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/admin-hover.png" class="image-hover" alt="Admin Department hover">
+              <div class="tile-label">Admin Department</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Art-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/art.png" class="default-image" alt="Art Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/art-hover.png" class="image-hover" alt="Art Department hover">
+              <div class="tile-label">Art Department</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Planning-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/planning.png" class="default-image" alt="Planning Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/planning-hover.png" class="image-hover" alt="Planning Department hover">
+              <div class="tile-label">Planning Department</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/E-com-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/e-com.png" class="default-image" alt="E-com Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/e-com-hover.png" class="image-hover" alt="E-com Department hover">
+              <div class="tile-label">E-com Department</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Quality-Control-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/quality.png" class="default-image" alt="Quality Control">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png" class="image-hover" alt="Quality Control hover">
+              <div class="tile-label">Quality Control</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Warehouse-Selection.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/warehouse.png" class="default-image" alt="Warehouse">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/warehouse-hover.png" class="image-hover" alt="Warehouse hover">
+              <div class="tile-label">Warehouse</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Service-Department-Team-Selection.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/service.png" class="default-image" alt="Service Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/service-hover.png" class="image-hover" alt="Service Department hover">
+              <div class="tile-label">Service Department</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Training%20Library/Forms/AllItems.aspx?npsAction=createList" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/training.png" class="default-image" alt="Training">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/training-hover.png" class="image-hover" alt="Training hover">
+              <div class="tile-label">Training</div>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Shipping-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/shipping.png" class="default-image" alt="Shipping Department">
+              <img src="https://stingraymanufacturers.github.io/departmenttiles/shipping-hover.png" class="image-hover" alt="Shipping Department hover">
+              <div class="tile-label">Shipping Department</div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ===== Name persistence + UI switching =====
+    (function(){
+      const STORAGE_KEY = 'displayName';
+
+      const welcomeEl = document.getElementById('welcome');
+      const appEl     = document.getElementById('app');
+
+      const userNameEl = document.getElementById('userName');
+      const inputEl  = document.getElementById('nameInput');
+      const saveBtn  = document.getElementById('saveBtn');
+      const editBtn  = document.getElementById('editBtn');
+
+      function getSavedName(){
+        try{ return (localStorage.getItem(STORAGE_KEY) || '').trim(); }
+        catch(e){ return ''; }
+      }
+      function setSavedName(name){
+        try{ localStorage.setItem(STORAGE_KEY, name); }catch(e){}
+      }
+
+      function showWelcome(show){
+        welcomeEl.style.display = show ? 'grid' : 'none';
+        if(show){
+          // keep value in sync when editing
+          inputEl.value = (getSavedName() || userNameEl.textContent || '').trim();
+          setTimeout(()=>{ inputEl.focus(); inputEl.select(); }, 0);
+        }
+      }
+
+      function showApp(show){
+        appEl.hidden = !show;
+      }
+
+      function setName(name){
+        if(!name) return;
+        userNameEl.textContent = name;
+      }
+
+      function save(){
+        const name = (inputEl.value || '').trim();
+        if(!name) return;
+        setSavedName(name);
+        setName(name);
+        showWelcome(false);
+        showApp(true);
+      }
+
+      // init
+      const saved = getSavedName();
+      if(saved){
+        setName(saved);
+        showWelcome(false);
+        showApp(true);
+      } else {
+        showApp(false);
+        showWelcome(true);
+      }
+
+      saveBtn.addEventListener('click', save);
+      inputEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') save(); });
+      editBtn.addEventListener('click', ()=> showWelcome(true));
+    })();
+
+    
+    // ===== Interactive gradient: banner-only cursor glow =====
+    (function () {
+      const r = document.documentElement;
+      const body = document.body;
+      const banner = document.querySelector('.banner');
+
+      if(!banner) return;
+
+      let raf = null;
+      let targetX = 0.5, targetY = 0.45;
+      let animX = targetX, animY = targetY;
+      let active = false;
+
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function tick() {
+        if(!active) {
+          raf = null;
+          return;
+        }
+
+        const k = 0.18;
+        animX += (targetX - animX) * k;
+        animY += (targetY - animY) * k;
+
+        r.style.setProperty('--mx', (animX * 100).toFixed(3) + '%');
+        r.style.setProperty('--my', (animY * 100).toFixed(3) + '%');
+
+        raf = requestAnimationFrame(tick);
+      }
+
+      function setTargetFromClient(x, y) {
+        const rect = banner.getBoundingClientRect();
+        const w = rect.width || 1;
+        const h = rect.height || 1;
+
+        targetX = Math.min(1, Math.max(0, (x - rect.left) / w));
+        targetY = Math.min(1, Math.max(0, (y - rect.top) / h));
+      }
+
+      function start() {
+        if (raf === null && !reduce) raf = requestAnimationFrame(tick);
+      }
+
+      banner.addEventListener('mouseenter', () => {
+        active = true;
+        start();
+      });
+
+      banner.addEventListener('mouseleave', () => {
+        active = false;
+        r.style.setProperty('--mx', '50%');
+        r.style.setProperty('--my', '45%');
+      });
+
+      banner.addEventListener('mousemove', (e) => {
+        if(!active) return;
+        setTargetFromClient(e.clientX, e.clientY);
+        start();
+      }, { passive: true });
+
+      banner.addEventListener('touchmove', (e) => {
+        if(!active) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        setTargetFromClient(t.clientX, t.clientY);
+        start();
+      }, { passive: true });
+
+      // Initial position
+      r.style.setProperty('--mx', '50%');
+      r.style.setProperty('--my', '45%');
+    })();
+      </script>
+</body>
+</html>
