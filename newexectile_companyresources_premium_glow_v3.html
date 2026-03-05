@@ -1,0 +1,4367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Stingray Intranet</title>
+  <style>
+    :root{
+      /* Cursor position (updated by JS) */
+      --mx: 50%;
+      --my: 50%;
+
+      
+
+/* ===== Theme (background + glow) ===== */
+--theme-bg: none;
+--theme-accent: #002c73;
+--theme-glow1: 160,160,160; /* bright */
+--theme-glow2: 110,110,110; /* mid */
+--theme-glow3: 70,70,70;    /* deep */
+--theme-wash0: 255,255,255; /* base wash */
+
+/* Blue palette */
+      --b0: #001b4d; /* deep */
+      --b1: #002c73; /* brand base */
+      --b2: #004aae; /* royal */
+      --b3: #0070d1; /* bright accent */
+
+      --text:#ffffff;
+      --shadow: 0 2px 6px rgba(0,0,0,0.65);
+
+      /* Responsive rhythm */
+      --space-xs: clamp(6px, 0.8vw, 10px);
+      --space-sm: clamp(10px, 1.2vw, 14px);
+      --space-md: clamp(16px, 2vw, 24px);
+      --space-lg: clamp(20px, 3vw, 36px);
+      --radius: 12px;
+      --control-h: clamp(40px, 5.2vw, 46px);
+      --input-w: min(360px, 76vw);
+    }
+
+    html, body { height:100%; }
+    /* Strong fallback: set the background on html/body too (SharePoint wrappers can interfere) */
+    html{
+      background-image: none;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    
+      background-color: #ffffff;
+    }
+    body{
+      margin:0;
+      min-height: 100svh;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol", sans-serif;
+      background-image: none;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      
+      background-color: #ffffff;
+background-color: transparent;
+      position: relative;
+    }
+
+    
+
+/* ===== Theme background for entire page (smooth crossfade) ===== */
+#themeBg{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+/* Two layers to avoid "blank" while the next image loads */
+#themeBg .theme-bg-layer{
+  position:absolute;
+  inset:0;
+  background-image: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 0;
+  transition: opacity .55s ease;
+  will-change: opacity;
+}
+
+/* Active layer */
+#themeBg .theme-bg-layer.is-active{ opacity: 1; }
+
+/* If user prefers reduced motion, switch instantly */
+@media (prefers-reduced-motion: reduce){
+  #themeBg .theme-bg-layer{ transition: none; }
+}
+
+/* No wash overlay — user wants ONLY the provided theme images */
+#themeBg::after{ display:none; }
+
+body{
+  position: relative;
+  background: transparent;
+}
+body > section,
+body > header,
+body > main,
+body > footer,
+body > div:not(#themeBg){
+  position: relative;
+  z-index: 1;
+}
+/* (removed old body::after wash; now handled by #themeBg layers) */
+body{
+  position: relative;
+  background: transparent;
+}
+body > section,
+body > header,
+body > main,
+body > footer,
+body > div:not(#themeBg){
+  position: relative;
+  z-index: 1;
+}
+/* (removed old body::after wash; now handled by #themeBg::after so the image always shows clearly) */
+
+    /* ===== Image Carousel Background + Interactive Glow Overlay (Welcome + Banner) ===== */
+
+/* Targets that need the carousel background */
+.blue-glow{
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* keeps overlays clean */
+  background: rgb(var(--theme-wash0)); /* fallback */
+}
+
+/* Two image layers for smooth crossfade */
+.blue-glow .bg-layer{
+  position:absolute;
+  inset:0;
+  background-position: calc(50% + var(--bgpx, 0px)) calc(50% + var(--bgpy, 0px));
+  background-size: cover;
+  background-repeat:no-repeat;
+
+  /* subtle motion + zoom */
+  transform: scale(1.02);
+  transition: opacity 1.2s ease, background-position .38s ease-out;
+
+  will-change: opacity, background-position, transform;
+  z-index: 0;
+}
+
+.blue-glow .bg-layer.is-active{
+  opacity: 1;
+}
+
+.blue-glow .bg-layer.is-idle{
+  opacity: 0;
+}
+
+/* Slow zoom at the start of each image */
+@keyframes bgZoom{
+  0%   { transform: scale(1.02); }
+  100% { transform: scale(1.08); }
+}
+.blue-glow .bg-layer.is-active.zoom{
+  animation: bgZoom 7.5s ease-out both;
+}
+
+/* The interactive multi-gradient glow overlay (kept, but dulled down) */
+.blue-glow::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index: 1;
+  pointer-events:none;
+
+  background:
+    radial-gradient(520px circle at var(--mx) var(--my),
+      rgba(var(--theme-glow1),0.28) 0%,
+      rgba(var(--theme-glow2),0.20) 35%,
+      rgba(0,0,0,0.00) 62%),
+    radial-gradient(980px circle at var(--mx) calc((var(--my) + 14%)),
+      rgba(var(--theme-glow2),0.18) 0%,
+      rgba(var(--theme-glow3),0.14) 48%,
+      rgba(0,0,0,0.00) 82%),
+    radial-gradient(1300px circle at calc((var(--mx) + 12%)) calc((var(--my) - 8%)),
+      rgba(var(--theme-glow3),0.12) 0%,
+      rgba(0,0,0,0.00) 62%),
+    /* theme wash */
+    linear-gradient(135deg,
+      rgba(var(--theme-wash0),0.56) 0%,
+      rgba(var(--theme-glow3),0.44) 40%,
+      rgba(var(--theme-glow2),0.30) 70%,
+      rgba(var(--theme-wash0),0.54) 100%),
+    /* subtle neutral dim to keep images natural */
+    linear-gradient(0deg, rgba(0,0,0,0.22), rgba(0,0,0,0.22));
+
+  box-shadow: inset 0 0 140px rgba(0,0,0,0.18);
+}
+
+/* Ensures your text/content sits above the layers */
+.welcome-inner,
+.banner-row,
+.banner-hint,
+.jump-nav{
+  position: relative;
+  z-index: 2;
+}
+
+/* Reduce motion safety */
+@media (prefers-reduced-motion: reduce){
+  .blue-glow .bg-layer{
+    transition: none;
+    transform: none;
+    animation: none !important;
+    background-position: 50% 50%;
+  }
+}
+
+    /* ===== Welcome (full screen) ===== */
+    .welcome{
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: var(--space-lg);
+      z-index: 50;
+    }
+
+    .welcome-inner{
+      width:100%;
+      max-width: min(1000px, 92vw);
+      text-align:center;
+    }
+
+    h1{
+      margin:0 0 var(--space-sm) 0;
+      font-size: clamp(30px, 6vw, 62px);
+      line-height:1.08;
+      letter-spacing: .2px;
+      /* Updated: deeper black shadow behind text */
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.95),
+        0 8px 22px rgba(0,0,0,0.78),
+        0 0 42px rgba(0,0,0,0.62);
+      font-weight: 850;
+    }
+
+    .sub{
+      font-size: clamp(16px, 2.6vw, 22px);
+      margin:0 0 var(--space-md) 0;
+      text-shadow: var(--shadow);
+      opacity:.98;
+    }
+
+    .name-editor{
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: rgba(255,255,255,0.08);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .name-editor input{
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      padding: 0 var(--space-sm);
+      border-radius: 10px;
+      outline: none;
+      width: var(--input-w);
+      height: var(--control-h);
+      font-size: clamp(14px, 2.4vw, 16px);
+    }
+    .name-editor button{
+      background: #ffffff;
+      color: var(--theme-accent);
+      border: none;
+      padding: 0 var(--space-md);
+      border-radius: 10px;
+      font-weight: 750;
+      cursor: pointer;
+      height: var(--control-h);
+      font-size: clamp(14px, 2.4vw, 16px);
+    }
+    .name-editor button:hover{ filter: brightness(.92); }
+
+    .sr-only{
+      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip: rect(0,0,1px,1px); white-space:nowrap; border:0;
+    }
+
+    @media (prefers-reduced-motion: no-preference){
+      .fade-in{ animation: fade .5s ease-out both; }
+      @keyframes fade{ from{ opacity:0; transform: translateY(8px) } to{ opacity:1; transform: translateY(0) } }
+    }
+    @media (prefers-reduced-motion: reduce){
+      :root{ --mx:50%; --my:45%; }
+    }
+
+    /* ===== Main layout (banner + tiles) ===== */
+     .app{
+      min-height: 100vh;
+      /* Force theme background INSIDE the webpart/SharePoint wrapper */
+      background: transparent;
+      color: #111;
+      overflow-x: hidden;
+    }
+
+    .banner{
+      position: relative;
+      z-index: 5;
+      color: #fff;
+      padding: clamp(20px, 4.5vh, 42px) clamp(14px, 3vw, 36px);
+      min-height: clamp(150px, 20vh, 220px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .banner-row{
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .banner-title{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: clamp(26px, 4.2vw, 52px);
+      font-weight: 900;
+      letter-spacing: .2px;
+      text-shadow: 0 1px 0 rgba(0,0,0,.75), 0 3px 14px rgba(0,0,0,.45);
+      line-height: 1.05;
+    }
+
+    .name-wrap{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .name-inline{
+      font-weight: 900;
+      text-decoration: none;
+      border: none;
+    }
+
+    .pencil-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor:pointer;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding:0;
+      transition: background .18s ease, transform .12s ease, opacity .18s ease, visibility .18s ease;
+    }
+    .pencil-btn:hover{ background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+
+    .pencil-icon{
+      width: 14px;
+      height: 14px;
+      display:inline-block;
+      background: linear-gradient(145deg, #f7f7f7 0%, #eeeeee 55%, #e6e6e6 100%);
+      transform: rotate(45deg);
+      border-radius: 2px 2px 2px 0;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.4) inset;
+    }
+    .pencil-icon::after{
+      content:"";
+      position:absolute;
+      right:-3px; top:calc(50% - 2px);
+      width: 6px;
+      height: 6px;
+      background:#ddd;
+      border-radius:1px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.3) inset;
+    }
+
+    @media (hover:hover){
+      .pencil-btn{ opacity:0; visibility:hidden; }
+      .name-wrap:hover .pencil-btn{ opacity:1; visibility:visible; }
+    }
+    @media (hover:none){
+      .pencil-btn{ opacity:1; visibility:visible; }
+    }
+
+    /* Remove the page-wide white wash so the background image shows everywhere */
+    .content{ 
+      padding: 6px clamp(6px, 1vw, 10px) 28px;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-top: none;
+    }
+
+    .tile-container{ max-width: 100%; margin-left: 0; margin-right: 0; width: 100%;
+      max-width: none;
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(200px, 18vw, 320px), 1fr));
+      gap: 8px;
+    }
+
+    
+    .tile-container.tile-container-4{
+      grid-template-columns: repeat(4, 1fr);
+    }
+    @media (max-width: 980px){
+      .tile-container.tile-container-4{
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 520px){
+      .tile-container.tile-container-4{
+        grid-template-columns: 1fr;
+      }
+    }
+@media (max-width: 700px){
+      .banner{ padding: 28px 14px; min-height: 200px; }
+      .content{ padding: 16px 14px; }
+      .tile-container{ max-width: 100%; margin-left: 0; margin-right: 0;  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    }
+
+    .tile{
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      aspect-ratio: 16 / 9;
+      cursor: pointer;
+      padding: 0; /* remove border frame */
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.10);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      transform: translateZ(0);
+    }
+    .tile:hover{
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.16);
+    }
+
+    @keyframes borderFlow{
+      0%{ background-position: 0% 50%; }
+      50%{ background-position: 100% 50%; }
+      100%{ background-position: 0% 50%; }
+    }
+
+    .tile-content{
+      position: relative;
+      height: 100%;
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #fff;
+    }
+    .tile-content img{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+      /* slower + smoother */
+      transition: opacity 1.15s cubic-bezier(.18,.9,.18,1), transform 1.15s cubic-bezier(.18,.9,.18,1);
+      will-change: opacity, transform;
+      /* parallax vars */
+      transform: scale(1.04) translate3d(var(--tx, 0px), var(--ty, 0px), 0);
+    }
+    .image-hover{ opacity: 0; }
+    .tile:hover .default-image{ opacity: 0; }
+    .tile:hover .image-hover{ opacity: 1; }
+
+    .tile:hover .tile-content img{ transform: scale(1.14) translate3d(var(--tx, 0px), var(--ty, 0px), 0); }
+
+
+    .tile-label{
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 5;
+      font-size: 18px;
+      font-weight: 800;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+      pointer-events: none;
+    }
+
+    a.tile-link{
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    /* Small hint text under banner (optional, hidden by default) */
+    .banner-hint{
+      width: 100%;
+      margin: 6px 0 0;
+      font-size: clamp(13px, 2vw, 18px);
+      opacity: .95;
+      text-shadow: 0 1px 10px rgba(0,0,0,.4);
+    }
+
+    .divider{ height: 0.5px;
+      background: rgba(0,0,0,0.18);
+      width: 100%;
+    }
+
+    /* ===== Laptop fit tweaks (keeps the same design, just scales tiles down) ===== */
+    @media (max-width: 1440px){
+      .content{ padding: 16px 16px 24px; }
+      .tile-container{ max-width: 100%; margin-left: 0; margin-right: 0;  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+      .tile-label{ font-size: 16px; }
+    }
+    @media (max-width: 1366px){
+      .tile-container{ max-width: 100%; margin-left: 0; margin-right: 0;  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+      .tile{ padding: 3px; }
+      .tile-label{ font-size: 15px; bottom: 8px; left: 8px; }
+    }
+    @media (max-width: 1100px){
+      .tile-container{ max-width: 100%; margin-left: 0; margin-right: 0;  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    }
+    @media (max-width: 420px){
+      .tile-container{ max-width: 100%; margin-left: 0; margin-right: 0;  grid-template-columns: 1fr; }
+    }
+
+    /* ===== Big feature tiles (below departments) ===== */
+    .feature-section{
+      width: 100%;
+      margin-top: clamp(18px, 2.4vw, 28px);
+    }
+
+    /* Horizontal rail (inspired by editorial card strips) */
+    .rail{
+      display:flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 6px 2px 12px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .rail::-webkit-scrollbar{ height: 10px; }
+    .rail::-webkit-scrollbar-thumb{ background: rgba(11,27,58,0.18); border-radius: 999px; }
+    .rail::-webkit-scrollbar-track{ background: rgba(11,27,58,0.06); border-radius: 999px; }
+
+    .rail-card{
+      scroll-snap-align: start;
+      min-width: min(320px, 86vw);
+      flex: 0 0 auto;
+      display:flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 14px;
+      border-radius: 16px;
+      text-decoration: none;
+      color: #0b1b3a;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.10);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s cubic-bezier(.2,.8,.2,1);
+      position: relative;
+      overflow:hidden;
+    }
+    .rail-card::after{
+      content:"";
+      position:absolute;
+      inset:-30%;
+      background: radial-gradient(520px circle at 18% 20%,
+        rgba(0,112,209,0.18) 0%,
+        rgba(0,74,174,0.10) 30%,
+        rgba(0,0,0,0) 60%);
+      opacity: .0;
+      transition: opacity .22s ease;
+      pointer-events:none;
+    }
+    .rail-card:hover{
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.16);
+    }
+    .rail-card:hover::after{ opacity: 1; }
+
+    .rail-icon{
+      width: 42px;
+      height: 42px;
+      display:grid;
+      place-items:center;
+      border-radius: 14px;
+      background: rgba(var(--theme-glow3),0.10);
+      border: 1px solid rgba(var(--theme-glow3),0.16);
+      font-size: 18px;
+      flex: 0 0 auto;
+    }
+    .rail-name{
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: .2px;
+      margin-bottom: 2px;
+    }
+    .rail-desc{
+      font-weight: 600;
+      font-size: 12px;
+      opacity: .75;
+      line-height: 1.2;
+    }
+
+    /* ===== Feature tile base (sanity) ===== */
+    .feature-tile{
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88));
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.7) inset;
+      transition: transform .26s cubic-bezier(.2,.8,.2,1), box-shadow .26s cubic-bezier(.2,.8,.2,1);
+      transform: translateZ(0);
+    }
+    .feature-tile:hover{ transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,0.18); }
+    .feature-inner{
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+      height: 100%;
+      min-height: clamp(220px, 26vw, 340px);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset;
+    }
+    .feature-media{ position:absolute; inset:0; overflow:hidden; border-radius: 12px; }
+    .feature-media img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.08) translate3d(0,0,0);
+      transition: transform .55s cubic-bezier(.2,.8,.2,1), filter .55s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .feature-tile:hover .feature-media img{
+      transform: scale(1.18) translate3d(0,-14px,0);
+      filter: saturate(1.12) contrast(1.05);
+    }
+    .feature-shine{
+      position:absolute;
+      inset:-20%;
+      background: radial-gradient(600px circle at 30% 20%,
+        rgba(255,255,255,0.22) 0%,
+        rgba(255,255,255,0.10) 30%,
+        rgba(255,255,255,0.0) 60%);
+      transform: translate3d(-6%, -4%, 0);
+      transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .6s ease;
+      opacity: .55;
+      pointer-events:none;
+    }
+    .feature-tile:hover .feature-shine{ transform: translate3d(6%, 4%, 0); opacity: .75; }
+    .feature-gradient{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      height: 55%;
+      background: linear-gradient(180deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.62) 100%);
+      pointer-events:none;
+      z-index: 3;
+    }
+
+    
+
+/* ===== Theme switcher (top-right of banner) ===== */
+.theme-switch{
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.theme-btn{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .2px;
+  cursor: pointer;
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.20);
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+.theme-btn:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.30);
+}
+.theme-dot{
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--theme-accent);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.22);
+  flex: 0 0 12px;
+}
+
+/* Compact swatch picker (no names) */
+.theme-menu{
+  position:absolute;
+  top: 44px;
+  right: 0;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.42);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 22px 70px rgba(0,0,0,0.40);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display:none;
+
+  /* compact layout */
+  min-width: unset;
+  display: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 38px;
+  gap: 10px;
+  align-items: center;
+}
+.theme-switch.is-open .theme-menu{ display:grid; }
+
+.theme-item{
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease;
+}
+.theme-item:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.28);
+}
+.theme-item:focus-visible{
+  outline: 2px solid rgba(var(--theme-glow1),0.9);
+  outline-offset: 2px;
+}
+
+/* the swatch inside the circle */
+.swatch{
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.28);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 520px){
+  .theme-switch{ top: 10px; right: 10px; }
+  .theme-btn{ height: 36px; padding: 0 10px; }
+  .theme-menu{
+    grid-auto-columns: 36px;
+    gap: 8px;
+    padding: 9px;
+  }
+  .theme-item{ width: 36px; height: 36px; }
+  .swatch{ width: 22px; height: 22px; }
+}
+
+  .theme-btn{ height: 36px; padding: 0 10px; }
+  .theme-menu{ min-width: 200px; }
+}
+
+    /* ===== Jump buttons (banner) ===== */
+    .jump-nav{
+      display:flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .jump-btn{
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.20);
+    }
+    .jump-btn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.30);
+    }
+    .jump-btn:active{ transform: translateY(0); }
+
+    /* ===== Sticky top nav (appears on scroll only) ===== */
+    .sticky-nav{
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      z-index: 1000;
+      width: min(980px, calc(100% - 24px));
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(-8px);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .sticky-nav.is-visible{
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .sticky-inner{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(var(--theme-glow3), 0.88);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 18px 46px rgba(0,0,0,0.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .sticky-title{
+      font-weight: 900;
+      letter-spacing: .2px;
+      color: #fff;
+      font-size: 13px;
+      opacity: .92;
+      white-space: nowrap;
+    }
+    .sticky-actions{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .sticky-btn{
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .18s ease, transform .18s ease, border-color .18s ease;
+    }
+    .sticky-btn:hover{
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.26);
+      transform: translateY(-1px);
+    }
+
+    /* Make room so sticky bar doesn't cover anchors */
+    #departments, #company-resources{ scroll-margin-top: 84px; }
+
+    @media (max-width: 520px){
+      .sticky-title{ display:none; }
+      .jump-btn{ padding: 9px 12px; font-size: 13px; }
+    }
+
+    /* ===== Company Resources: single-tile slider (theme-aware) ===== */
+
+    /* ===== Company Resources: zig-zag layout (big tile + text) ===== */
+    #company-resources .resource-slider,
+    #company-resources .resource-nav,
+    #company-resources .resource-viewport,
+    #company-resources .resource-track{ display:none !important; }
+
+    #company-resources .resource-zigzag{
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 4px 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 2.2vw, 26px);
+    }
+
+    #company-resources .resource-row{
+      display: grid;
+      grid-template-columns: 1.6fr 0.4fr;
+      gap: clamp(16px, 2.5vw, 34px);
+      align-items: center;
+    }
+    #company-resources .resource-row.reverse{
+      grid-template-columns: 0.4fr 1.6fr;
+    }
+
+    /* Make the big tile feel like a hero card */
+    #company-resources .feature-tile{ width: 100%; margin: 0; }
+    #company-resources .feature-inner{ min-height: clamp(300px, 26vw, 440px); }
+    /* Hide the on-image label for this layout (text lives in the copy block) */
+    #company-resources .feature-label{ display:none !important; }
+
+    #company-resources .resource-copy{
+      position: relative;
+      padding: clamp(14px, 2vw, 22px);
+      border-radius: 22px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 16px 40px rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    #company-resources .resource-kicker{
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 12px;
+      opacity: .8;
+      margin-bottom: 8px;
+    }
+    #company-resources .resource-title{
+      margin: 0 0 8px;
+      font-size: clamp(20px, 2.2vw, 30px);
+      line-height: 1.15;
+    }
+    #company-resources .resource-desc{
+      margin: 0 0 14px;
+      opacity: .9;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    #company-resources .resource-cta{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,44,115,.20);
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+      font-weight: 800;
+      text-decoration: none;
+      color: inherit;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+    #company-resources .resource-cta:hover{
+      transform: translateY(-2px);
+      background: rgba(0,44,115,.28);
+      border-color: rgba(255,255,255,.28);
+    }
+
+    @media (max-width: 860px){
+      #company-resources .resource-row,
+      #company-resources .resource-row.reverse{
+        grid-template-columns: 1fr;
+      }
+      #company-resources .resource-copy{ order: 2; }
+      #company-resources .resource-row.reverse .resource-copy{ order: 2; }
+    }
+
+
+    #company-resources .resource-slider{
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 4px 0 10px;
+    }
+    #company-resources .resource-viewport{
+      position: relative;
+      overflow: hidden;
+      border-radius: 26px;
+    }
+    #company-resources .resource-track{
+      display: flex;
+      gap: clamp(14px, 2.2vw, 22px);
+      align-items: stretch;
+      will-change: transform;
+      transition: transform 680ms cubic-bezier(.2,.85,.2,1);
+    }
+    #company-resources .resource-item{
+      flex: 0 0 auto;
+      width: clamp(320px, 78vw, 940px); /* massive tile */
+      max-width: 940px;
+    }
+
+    /* reuse existing feature tile styling, just make it fill the resource-item */
+    #company-resources .resource-item .feature-tile{
+      width: 100%;
+      margin: 0;
+    }
+    #company-resources .resource-item .feature-inner{
+      min-height: clamp(240px, 28vw, 380px);
+    }
+
+    /* label sits on image (white + shadow) */
+    #company-resources .feature-label{
+      position: absolute;
+      left: 16px;
+      bottom: 18px;
+      z-index: 5;
+      color: #fff;
+      font-weight: 950;
+      font-size: clamp(18px, 2.1vw, 30px);
+      letter-spacing: .2px;
+      text-shadow: 0 3px 12px rgba(0,0,0,.55), 2px 2px 4px rgba(0,0,0,.85);
+    }
+    #company-resources .feature-sub{
+      display:block;
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: clamp(12px, 1.1vw, 15px);
+      opacity: .92;
+      text-shadow: 0 2px 10px rgba(0,0,0,.45), 1px 1px 3px rgba(0,0,0,.85);
+    }
+
+    /* navigation buttons */
+    #company-resources .resource-nav{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(0,0,0,0.22);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      user-select: none;
+    }
+    #company-resources .resource-nav:hover{
+      transform: translateY(-50%) scale(1.05);
+      background: rgba(0,0,0,0.32);
+      border-color: rgba(255,255,255,0.34);
+    }
+    #company-resources .resource-nav:active{
+      transform: translateY(-50%) scale(0.98);
+    }
+    #company-resources .resource-nav.prev{ left: 10px; }
+    #company-resources .resource-nav.next{ right: 10px; }
+
+    /* subtle edge fades so the “peek” feels premium */
+    #company-resources .resource-viewport:before,
+    #company-resources .resource-viewport:after{
+      content:"";
+      position:absolute;
+      top:0; bottom:0;
+      width: 46px;
+      pointer-events:none;
+      z-index: 15;
+    }
+    #company-resources .resource-viewport:before{
+      left:0;
+      background: linear-gradient(90deg, rgba(0,0,0,.36), rgba(0,0,0,0));
+    }
+    #company-resources .resource-viewport:after{
+      right:0;
+      background: linear-gradient(270deg, rgba(0,0,0,.36), rgba(0,0,0,0));
+    }
+
+    @media (max-width: 520px){
+      #company-resources .resource-nav{ width: 40px; height: 40px; font-size: 20px; }
+      #company-resources .resource-nav.prev{ left: 6px; }
+      #company-resources .resource-nav.next{ right: 6px; }
+      #company-resources .resource-viewport:before,
+      #company-resources .resource-viewport:after{ width: 34px; }
+    }
+
+
+    /* ===== Social stats ===== */
+    .social-stats{
+      margin-top: clamp(18px, 2.4vw, 28px);
+      padding: clamp(14px, 2vw, 22px);
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.10);
+    }
+    .social-head{ display:flex; flex-direction:column; gap:6px; margin-bottom: 14px; }
+    .social-title{
+      margin:0;
+      font-size: clamp(18px, 2.2vw, 28px);
+      font-weight: 900;
+      color:#111;
+      letter-spacing:.2px;
+    }
+    .social-sub{
+      margin:0;
+      color: rgba(0,0,0,0.62);
+      font-weight: 650;
+      font-size: clamp(13px, 1.3vw, 15px);
+    }
+    .social-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(12px, 1.6vw, 16px);
+    }
+    @media (max-width: 900px){
+      .social-grid{ grid-template-columns: 1fr; }
+    }
+    .social-card{
+      display:flex;
+      gap: 14px;
+      align-items:center;
+      padding: 14px 14px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92));
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+      text-decoration:none;
+      color: inherit;
+      transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s cubic-bezier(.2,.8,.2,1);
+      transform: translateZ(0);
+    }
+    .social-card:hover{
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.14);
+    }
+    .social-brand{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      color: #fff;
+      flex: 0 0 44px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+      user-select:none;
+    }
+    .social-brand.fb{ background: linear-gradient(145deg, #f7f7f7 0%, #eeeeee 55%, #e6e6e6 100%); }
+    .social-brand.ig{ background: linear-gradient(145deg, #f7f7f7 0%, #eeeeee 55%, #e6e6e6 100%); }
+    .social-brand.yt{ background: linear-gradient(145deg, #f7f7f7 0%, #eeeeee 55%, #e6e6e6 100%); }
+
+    .social-meta{ display:flex; flex-direction:column; line-height:1.1; }
+    .social-name{ font-weight: 900; color:#111; }
+    .social-count{
+      font-weight: 950;
+      font-size: clamp(18px, 2.2vw, 30px);
+      margin-top: 6px;
+      color: var(--theme-accent);
+      letter-spacing: .3px;
+    }
+    .social-label{
+      margin-top: 6px;
+      font-weight: 750;
+      color: rgba(0,0,0,0.62);
+      font-size: 13px;
+    }
+    .social-note{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      color: rgba(0,0,0,0.65);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+  
+  /* ===== Admin pop-up tiles modal ===== */
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    /* fade-in layer */
+    opacity: 0;
+    pointer-events: none;
+    display: grid;
+    place-items: center;
+    padding: clamp(16px, 3vw, 28px);
+
+    /* starts clear, becomes blurred via opacity transition */
+    background: rgba(0,0,0,0.32);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+
+    transition: opacity .28s ease, backdrop-filter .28s ease, -webkit-backdrop-filter .28s ease;
+  }
+  .modal-overlay.is-open{
+    opacity: 1;
+    pointer-events: auto;
+
+    background: rgba(0,0,0,0.36);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Panel entrance */
+  .modal-panel{
+    width: min(1100px, 96vw);
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.10);
+    box-shadow: 0 28px 80px rgba(0,0,0,0.35);
+
+    transform: translate3d(0, 12px, 0) scale(0.985);
+    opacity: 0;
+    transition: transform .34s cubic-bezier(.2,.8,.2,1), opacity .22s ease;
+  }
+  .modal-overlay.is-open .modal-panel{
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+
+  .modal-head{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    background: rgba(0, 27, 77, 0.70);
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+  }
+  .modal-title{
+    font-weight: 950;
+    letter-spacing: .2px;
+    font-size: clamp(14px, 1.6vw, 18px);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  }
+  .modal-close{
+    appearance:none;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.10);
+    color:#fff;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    cursor:pointer;
+    font-weight: 950;
+    font-size: 18px;
+    line-height: 1;
+    display:grid;
+    place-items:center;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .modal-close:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.16);
+    border-color: rgba(255,255,255,0.30);
+  }
+
+  .modal-body{
+    padding: clamp(14px, 2.2vw, 20px);
+  }
+  .modal-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  /* Re-use tile style but make it feel more premium in modal */
+  .modal-grid .tile{
+    aspect-ratio: 16 / 10;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+    background: rgba(255,255,255,0.06);
+
+    /* tile entrance defaults (slide from side) */
+    transform: translate3d(26px, 0, 0);
+    opacity: 0;
+    transition: transform .42s cubic-bezier(.2,.8,.2,1), opacity .28s ease;
+  }
+
+  /* Stagger */
+  .modal-grid a:nth-child(1) .tile{ transition-delay: 80ms; }
+  .modal-grid a:nth-child(2) .tile{ transition-delay: 140ms; }
+  .modal-grid a:nth-child(3) .tile{ transition-delay: 200ms; }
+  .modal-grid a:nth-child(4) .tile{ transition-delay: 260ms; }
+
+  .modal-overlay.is-open .modal-grid .tile{
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+
+  .modal-grid .tile-content{
+    border-radius: 16px;
+    background: rgba(255,255,255,0.06);
+  }
+  .modal-grid .tile-label{
+    font-size: 18px;
+    bottom: 14px;
+    left: 14px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .modal-overlay, .modal-panel, .modal-grid .tile{
+      transition: none !important;
+      transform: none !important;
+      opacity: 1 !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  }
+
+  .tool-tile::after{ display:none; }
+  }
+
+
+  }
+
+
+  }
+
+
+  
+
+  
+  }
+
+
+  /* ===== Tools tiles (circle, white background) ===== */
+  .tools-section{
+    width: 100%;
+    margin-top: clamp(28px, 3.2vw, 44px);
+    margin-bottom: clamp(18px, 2.4vw, 28px);
+    padding: clamp(18px, 2.8vw, 28px) 0;
+    position: relative;
+  }
+
+  .tools-section::before{
+    content:"";
+    position:absolute;
+    left: 0; right: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(0,0,0,0.10);
+    opacity: .75;
+  }
+
+  .tools-wrap{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap: clamp(26px, 3vw, 40px);
+    flex-wrap: wrap;
+    padding-top: clamp(18px, 2.4vw, 26px);
+  }
+
+  .tool-icon-tile{
+    --tileSize: clamp(120px, 10vw, 150px);
+    width: var(--tileSize);
+    text-decoration:none;
+    color:#111;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 14px;
+  }
+
+  /* Circle tile */
+  .tool-card{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 999px;
+
+    /* Theme-aware glass ring */
+    background:
+      radial-gradient(120% 120% at 30% 20%,
+        rgba(var(--theme-glow1),0.22) 0%,
+        rgba(var(--theme-glow2),0.14) 38%,
+        rgba(var(--theme-glow3),0.10) 62%,
+        rgba(255,255,255,0.90) 100%);
+
+    border: 1px solid rgba(var(--theme-glow2),0.22);
+    box-shadow:
+      0 8px 20px rgba(0,0,0,0.14),
+      0 0 0 2px rgba(var(--theme-glow3),0.12) inset;
+    display:grid;
+    place-items:center;
+    position: relative;
+    overflow:hidden;
+    transform: translateZ(0);
+    transition: transform .26s cubic-bezier(.2,.8,.2,1), box-shadow .26s cubic-bezier(.2,.8,.2,1);
+
+  }
+
+  /* Constant moving light inside the circle */
+  .tool-card::before{
+    content:"";
+    position:absolute;
+    inset:-65%;
+    border-radius: 999px;
+    pointer-events:none;
+    opacity: 0.7;
+    /* layered highlights so it feels like a moving light sweep */
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.00) 56%),
+      conic-gradient(from 180deg,
+        rgba(255,255,255,0.00) 0deg,
+        rgba(255,255,255,0.22) 38deg,
+        rgba(255,255,255,0.00) 92deg,
+        rgba(255,255,255,0.16) 140deg,
+        rgba(255,255,255,0.00) 220deg,
+        rgba(255,255,255,0.12) 300deg,
+        rgba(255,255,255,0.00) 360deg);
+    filter: blur(10px);
+    mix-blend-mode: overlay;
+    animation: toolLightMove 6.2s ease-in-out infinite;
+    transform: translate3d(0,0,0);
+  }
+
+  @keyframes toolLightMove{
+    0%   { transform: translate(-10%,-8%) rotate(0deg);   }
+    50%  { transform: translate(10%,10%)  rotate(180deg); }
+    100% { transform: translate(-10%,-8%) rotate(360deg); }
+  }
+
+  .tool-card img{
+    width: 76%;
+    height: 76%;
+    object-fit: contain;
+    display:block;
+    transform: translateY(0);
+    transition: transform .26s cubic-bezier(.2,.8,.2,1), filter .26s cubic-bezier(.2,.8,.2,1);
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,0.16));
+  }
+  /* Pop out + deeper shadow on hover */
+  .tool-icon-tile:hover .tool-card{
+    transform: translateY(-7px) scale(1.02);
+    box-shadow: 0 26px 70px rgba(0,0,0,0.26), 0 0 34px rgba(var(--theme-glow1),0.36);
+  }
+  .tool-icon-tile:hover .tool-card img{
+    transform: translateY(-2px) scale(1.04);
+    filter: drop-shadow(0 18px 28px rgba(0,0,0,0.20));
+  }
+
+    .tool-label{
+    font-family: "Segoe UI","Segoe UI Variable",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    text-align:center;
+    letter-spacing: .35px;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.90);
+    white-space: nowrap;
+    line-height: 1.05;
+    margin-top: 6px;
+  }
+@media (prefers-reduced-motion: reduce){
+    .tool-card, .tool-card img, .tool-card::before{ transition:none !important; transform:none !important; animation:none !important; }
+  }
+
+
+  /* ===== Tools: Teams mini action overlay (smooth + slow) ===== */
+  .tool-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    pointer-events: none;
+  }
+  .tool-overlay.is-open{
+    display: block;
+    pointer-events: auto;
+  }
+  .tool-overlay-backdrop{
+    position:absolute;
+    inset:0;
+    background: rgba(0,0,0,0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity .55s ease;
+  }
+  .tool-overlay.is-open .tool-overlay-backdrop{ opacity: 1; }
+
+  .teams-fab-wrap{
+    position:absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 50%;
+    width: min(680px, calc(100% - 24px));
+    pointer-events: none;
+  }
+
+  .teams-fab-rail{
+    pointer-events: auto;
+    display:flex;
+    justify-content:center;
+    gap: 14px;
+    flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1);
+  }
+  .tool-overlay.is-open .teams-fab-rail{
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .mini-tool{
+    width: 74px;
+    height: 74px;
+    border-radius: 999px;
+    text-decoration:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 4px;
+    color: #0b1b3a;
+    background: linear-gradient(145deg, #f7f7f7 0%, #eeeeee 55%, #e6e6e6 100%);
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.72);
+    transform: translateZ(0);
+    transition: transform .42s cubic-bezier(.2,.8,.2,1), box-shadow .42s cubic-bezier(.2,.8,.2,1);
+  }
+  .mini-tool:hover{
+    transform: translateY(-6px) scale(1.04);
+    box-shadow: 0 20px 52px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.72);
+  }
+  .mini-icon{
+    font-size: 22px;
+    line-height: 1;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.10));
+  }
+  .mini-text{
+    font-family: "Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    font-weight: 850;
+    font-size: 10.5px;
+    letter-spacing: .22px;
+    text-transform: uppercase;
+  }
+
+  .tool-close{
+    pointer-events: auto;
+    position:absolute;
+    right: 10px;
+    top: -44px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.40);
+    color: #fff;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+    transition: transform .35s ease, background .35s ease;
+  }
+  .tool-close:hover{ transform: translateY(-2px); background: rgba(0,0,0,0.52); }
+
+  @media (prefers-reduced-motion: reduce){
+    .tool-overlay-backdrop, .teams-fab-rail, .mini-tool, .tool-close{ transition:none !important; }
+  }
+
+
+
+/* ===== Copilot sidebar drawer (no page reload) ===== */
+.copilot-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: none;
+  pointer-events: none;
+}
+.copilot-overlay.is-open{
+  display: block;
+  pointer-events: auto;
+}
+.copilot-backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+.copilot-overlay.is-open .copilot-backdrop{ opacity: 1; }
+
+.copilot-drawer{
+  position:absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(560px, 92vw);
+  background: rgba(255,255,255,0.92);
+  border-left: 1px solid rgba(0,0,0,0.10);
+  box-shadow: -24px 0 80px rgba(0,0,0,0.26);
+  transform: translate3d(18px, 0, 0);
+  opacity: 0;
+  transition: transform .55s cubic-bezier(.2,.8,.2,1), opacity .35s ease;
+  display:flex;
+  flex-direction: column;
+}
+.copilot-overlay.is-open .copilot-drawer{
+  transform: translate3d(0,0,0);
+  opacity: 1;
+}
+
+.copilot-head{
+  padding: 12px 14px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(0, 27, 77, 0.92);
+  color:#fff;
+  border-bottom: 1px solid rgba(255,255,255,0.16);
+}
+.copilot-title{
+  font-weight: 950;
+  letter-spacing: .2px;
+  font-size: 14px;
+}
+.copilot-actions{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.copilot-open{
+  text-decoration:none;
+  color:#fff;
+  font-weight: 900;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+  white-space: nowrap;
+}
+.copilot-open:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.30);
+}
+.copilot-close{
+  appearance:none;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.10);
+  color:#fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  cursor:pointer;
+  font-weight: 950;
+  font-size: 18px;
+  line-height: 1;
+  display:grid;
+  place-items:center;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+.copilot-close:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.30);
+}
+
+.copilot-body{
+  flex: 1 1 auto;
+  display:flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+  gap: 10px;
+}
+.copilot-note{
+  font-size: 12.5px;
+  color: rgba(0,0,0,0.68);
+  line-height: 1.35;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0,44,115,0.06);
+  border: 1px solid rgba(0,44,115,0.10);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .copilot-backdrop, .copilot-drawer{ transition:none !important; }
+  .copilot-drawer{ transform:none !important; opacity: 1 !important; }
+}
+
+
+
+.copilot-launch{
+  flex: 1 1 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height: 0;
+  padding: 8px;
+}
+.copilot-launch-card{
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  padding: 16px 16px 14px;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.10);
+}
+.copilot-launch-title{
+  font-weight: 950;
+  font-size: 14px;
+  color: rgba(0,0,0,0.86);
+  margin-bottom: 6px;
+}
+.copilot-launch-text{
+  font-size: 12.5px;
+  color: rgba(0,0,0,0.70);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.copilot-launch-btn{
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  border-radius: 14px;
+  padding: 12px 12px;
+  font-weight: 950;
+  color: #fff;
+  background: rgba(0, 44, 115, 0.95);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.16);
+  transition: transform .18s ease, filter .18s ease;
+}
+.copilot-launch-btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.copilot-launch-hint{
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(0,0,0,0.62);
+  line-height: 1.35;
+}
+
+
+
+/* --- Small section heading (centered + hover loading bar) --- */
+.section-minihead{
+  width: 100%;
+  max-width: min(1400px, 96vw);
+  margin: 22px auto 14px;
+  padding: 12px clamp(14px, 1.8vw, 26px);
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 18px;
+  line-height: 1.1;
+  text-align: center;
+
+  /* Bar look */
+  position: relative;
+  overflow: hidden;
+  color: rgba(255,255,255,.98);
+  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Keep text above the loading fill */
+.section-minihead > *,
+.section-minihead{
+  z-index: 1;
+}
+.section-minihead{
+  isolation: isolate;
+}
+
+/* Loading fill (uses current theme colours) */
+/* subtle top highlight */
+
+/* --- Section heading loading fill: reliable transform-based fill --- */
+.section-minihead::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  height:100%;
+  width:100%;
+  background: linear-gradient(90deg,
+    var(--theme-glow1, rgba(0,44,115,.9)),
+    var(--theme-accent, rgba(0,44,115,.9)),
+    var(--theme-glow2, rgba(255,255,255,.25)),
+    var(--theme-glow3, rgba(0,44,115,.9))
+  );
+  opacity:.55;
+  z-index: 0;
+  pointer-events: none;
+
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 900ms ease;
+}
+
+.section-minihead:hover::before{
+  transform: scaleX(1);
+}
+
+.section-minihead::after{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  height:1px;
+  width:100%;
+  background: rgba(255,255,255,.22);
+  z-index: 0;
+}
+
+to{ width:100%; }
+}
+
+
+/* --- Heading bar: ensure hover works + visible fill contrast --- */
+.section-minihead{
+  display: block !important;
+  pointer-events: auto !important;
+  cursor: default;
+  background: rgba(0,0,0,.35) !important; /* darker base so fill is visible */
+}
+
+/* Visible fill */
+.section-minihead::before{
+  opacity: .20; /* idle, barely visible */
+  filter: saturate(1.25) contrast(1.05);
+  background: linear-gradient(90deg,
+    var(--theme-wash0, rgba(255,255,255,.18)),
+    var(--theme-accent, rgba(0,44,115,.95)),
+    var(--theme-glow1, rgba(0,44,115,.95)),
+    var(--theme-glow3, rgba(255,255,255,.28))
+  ) !important;
+}
+
+.section-minihead:hover::before{
+  opacity: .78;              /* strong on hover so you can SEE movement */
+  transform: scaleX(1);
+}
+
+.section-minihead:hover{
+  border-color: rgba(255,255,255,.32) !important;
+}
+
+
+/* text color for company resources bubbles */
+#company-resources .resource-text,
+#company-resources .resource-text *{
+  color: #fff;
+}
+
+/* white / grey themes use dark text */
+.theme-white #company-resources .resource-text,
+.theme-white #company-resources .resource-text *,
+.theme-grey #company-resources .resource-text,
+.theme-grey #company-resources .resource-text *{
+  color: #111 !important;
+}
+
+
+/* Fix text color inside company resource card tiles */
+#company-resources .feature-card,
+#company-resources .feature-card *{
+  color: #ffffff !important;
+}
+
+/* dark text for light themes */
+.theme-white #company-resources .feature-card,
+.theme-white #company-resources .feature-card *,
+.theme-grey #company-resources .feature-card,
+.theme-grey #company-resources .feature-card *{
+  color: #111111 !important;
+}
+
+
+/* Company Resources text card (resource-copy) color fix */
+#company-resources .resource-copy,
+#company-resources .resource-copy *{
+  color: #ffffff !important;
+}
+
+/* Light themes: use dark text */
+.theme-white #company-resources .resource-copy,
+.theme-white #company-resources .resource-copy *,
+.theme-grey #company-resources .resource-copy,
+.theme-grey #company-resources .resource-copy *{
+  color: #111111 !important;
+}
+
+
+#company-resources .resource-copy{
+  min-height: 220px;
+  padding: 28px 32px;
+}
+
+
+/* scroll fade for tools */
+#tools .tool-tile,
+#tools .tool-icon,
+#tools .tool-item{
+  opacity:0;
+  transform: translateY(40px);
+  transition: all 0.6s ease;
+}
+
+#tools.reveal-active .tool-tile,
+#tools.reveal-active .tool-icon,
+#tools.reveal-active .tool-item{
+  opacity:1;
+  transform: translateY(0);
+}
+
+
+/* global smooth reveal */
+
+.reveal-item{
+  opacity:0;
+  transform: translateY(60px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+.reveal-item.active{
+  opacity:1;
+  transform: translateY(0);
+}
+
+
+/* --- Company Resources: make images fit neatly in feature tiles --- */
+#company-resources .feature-media{
+  position: relative;
+  overflow: hidden;
+}
+
+#company-resources .feature-media img{
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  object-fit: cover;          /* fills tile without distortion */
+  object-position: center;    /* keep centered */
+  transform: scale(1.01);     /* tiny scale to avoid edge gaps */
+}
+
+/* If any feature tiles use background images instead of <img> */
+#company-resources .feature-media[style*="background"]{
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Keep the inner tile consistent */
+#company-resources .feature-inner{
+  overflow: hidden;
+}
+
+
+/* ===== PREMIUM THEME-AWARE COMPANY RESOURCES ===== */
+
+#company-resources .resource-copy{
+  position: relative;
+  padding: clamp(16px, 2.2vw, 26px);
+  border-radius: 24px;
+
+  background:
+    radial-gradient(120% 120% at 20% 10%, rgba(var(--theme-glow1),0.35), rgba(0,0,0,0) 60%),
+    linear-gradient(135deg,
+      rgba(var(--theme-glow3), 0.78),
+      rgba(var(--theme-glow2), 0.65)
+    );
+
+  border: 1px solid rgba(var(--theme-glow1), 0.45);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.35),
+    0 0 40px rgba(var(--theme-glow1), .35),
+    inset 0 0 30px rgba(var(--theme-glow3), .35);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  color: #ffffff;
+  overflow: hidden;
+}
+
+#company-resources .resource-copy::after{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.0) 60%);
+  animation: resourceGlowMove 8s ease-in-out infinite;
+  pointer-events:none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes resourceGlowMove{
+  0%   { transform: translate(-8%, -6%) rotate(0deg); }
+  50%  { transform: translate(8%, 6%) rotate(180deg); }
+  100% { transform: translate(-8%, -6%) rotate(360deg); }
+}
+
+#company-resources .resource-cta{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 13px 18px;
+  border-radius: 16px;
+
+  background: linear-gradient(135deg,
+    var(--theme-accent),
+    rgba(var(--theme-glow1),0.95)
+  );
+
+  color: #ffffff;
+  font-weight: 950;
+  text-decoration: none;
+
+  border: 1px solid rgba(255,255,255,.35);
+
+  box-shadow:
+    0 16px 36px rgba(0,0,0,.35),
+    0 0 28px rgba(var(--theme-glow1), .65);
+
+  transition: transform .22s cubic-bezier(.2,.8,.2,1),
+              box-shadow .22s ease,
+              filter .22s ease;
+}
+
+#company-resources .resource-cta:hover{
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.12);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.45),
+    0 0 40px rgba(var(--theme-glow1), .85);
+}
+
+
+/* ===== Company Resource Image Gradient + Glow Pulse (Feature Tiles) ===== */
+
+#company-resources .feature-media{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Gradient overlay over PNG image */
+#company-resources .feature-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--theme-glow1), 0.55),
+    rgba(var(--theme-glow2), 0.30),
+    rgba(var(--theme-glow3), 0.70)
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.65;
+  transition: opacity .35s ease;
+}
+
+/* Premium glow pulse on hover */
+@keyframes resourcePulseGlow2{
+  0%   { box-shadow: 0 0 0 rgba(var(--theme-glow1), 0.0), 0 14px 36px rgba(0,0,0,0.18); }
+  50%  { box-shadow: 0 0 38px rgba(var(--theme-glow1), 0.85), 0 18px 46px rgba(0,0,0,0.22); }
+  100% { box-shadow: 0 0 0 rgba(var(--theme-glow1), 0.0), 0 14px 36px rgba(0,0,0,0.18); }
+}
+
+#company-resources .feature-tile:hover{
+  animation: resourcePulseGlow2 1.7s ease-in-out infinite;
+}
+
+#company-resources .feature-tile:hover .feature-media::after{
+  opacity: 0.88;
+}
+
+</style>
+
+
+
+
+
+<style>
+/* --- Department tiles: add a clear visual break before the final 4 tiles --- */
+/* Force the final row to stretch full width as 4 equal tiles on desktop */
+@media (min-width: 1100px){
+  }
+
+/* Keep consistent spacing on smaller screens */
+@media (max-width: 1099px){
+  }
+
+/* text color for company resources bubbles */
+#company-resources .resource-text,
+#company-resources .resource-text *{
+  color: #fff;
+}
+
+/* white / grey themes use dark text */
+.theme-white #company-resources .resource-text,
+.theme-white #company-resources .resource-text *,
+.theme-grey #company-resources .resource-text,
+.theme-grey #company-resources .resource-text *{
+  color: #111 !important;
+}
+
+
+/* Fix text color inside company resource card tiles */
+#company-resources .feature-card,
+#company-resources .feature-card *{
+  color: #ffffff !important;
+}
+
+/* dark text for light themes */
+.theme-white #company-resources .feature-card,
+.theme-white #company-resources .feature-card *,
+.theme-grey #company-resources .feature-card,
+.theme-grey #company-resources .feature-card *{
+  color: #111111 !important;
+}
+
+
+#company-resources .resource-copy{
+  min-height: 220px;
+  padding: 28px 32px;
+}
+
+
+/* scroll fade for tools */
+#tools .tool-tile,
+#tools .tool-icon,
+#tools .tool-item{
+  opacity:0;
+  transform: translateY(40px);
+  transition: all 0.6s ease;
+}
+
+#tools.reveal-active .tool-tile,
+#tools.reveal-active .tool-icon,
+#tools.reveal-active .tool-item{
+  opacity:1;
+  transform: translateY(0);
+}
+
+
+/* global smooth reveal */
+
+.reveal-item{
+  opacity:0;
+  transform: translateY(60px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+.reveal-item.active{
+  opacity:1;
+  transform: translateY(0);
+}
+
+
+/* ===== PREMIUM THEME-AWARE COMPANY RESOURCES ===== */
+
+#company-resources .resource-copy{
+  position: relative;
+  padding: clamp(16px, 2.2vw, 26px);
+  border-radius: 24px;
+
+  background:
+    radial-gradient(120% 120% at 20% 10%, rgba(var(--theme-glow1),0.35), rgba(0,0,0,0) 60%),
+    linear-gradient(135deg,
+      rgba(var(--theme-glow3), 0.78),
+      rgba(var(--theme-glow2), 0.65)
+    );
+
+  border: 1px solid rgba(var(--theme-glow1), 0.45);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.35),
+    0 0 40px rgba(var(--theme-glow1), .35),
+    inset 0 0 30px rgba(var(--theme-glow3), .35);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  color: #ffffff;
+  overflow: hidden;
+}
+
+#company-resources .resource-copy::after{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.0) 60%);
+  animation: resourceGlowMove 8s ease-in-out infinite;
+  pointer-events:none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes resourceGlowMove{
+  0%   { transform: translate(-8%, -6%) rotate(0deg); }
+  50%  { transform: translate(8%, 6%) rotate(180deg); }
+  100% { transform: translate(-8%, -6%) rotate(360deg); }
+}
+
+#company-resources .resource-cta{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 13px 18px;
+  border-radius: 16px;
+
+  background: linear-gradient(135deg,
+    var(--theme-accent),
+    rgba(var(--theme-glow1),0.95)
+  );
+
+  color: #ffffff;
+  font-weight: 950;
+  text-decoration: none;
+
+  border: 1px solid rgba(255,255,255,.35);
+
+  box-shadow:
+    0 16px 36px rgba(0,0,0,.35),
+    0 0 28px rgba(var(--theme-glow1), .65);
+
+  transition: transform .22s cubic-bezier(.2,.8,.2,1),
+              box-shadow .22s ease,
+              filter .22s ease;
+}
+
+#company-resources .resource-cta:hover{
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.12);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.45),
+    0 0 40px rgba(var(--theme-glow1), .85);
+}
+
+
+/* ===== Company Resource Image Gradient + Glow Pulse (Feature Tiles) ===== */
+
+#company-resources .feature-media{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Gradient overlay over PNG image */
+#company-resources .feature-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--theme-glow1), 0.55),
+    rgba(var(--theme-glow2), 0.30),
+    rgba(var(--theme-glow3), 0.70)
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.65;
+  transition: opacity .35s ease;
+}
+
+/* Premium glow pulse on hover */
+@keyframes resourcePulseGlow2{
+  0%   { box-shadow: 0 0 0 rgba(var(--theme-glow1), 0.0), 0 14px 36px rgba(0,0,0,0.18); }
+  50%  { box-shadow: 0 0 38px rgba(var(--theme-glow1), 0.85), 0 18px 46px rgba(0,0,0,0.22); }
+  100% { box-shadow: 0 0 0 rgba(var(--theme-glow1), 0.0), 0 14px 36px rgba(0,0,0,0.18); }
+}
+
+#company-resources .feature-tile:hover{
+  animation: resourcePulseGlow2 1.7s ease-in-out infinite;
+}
+
+#company-resources .feature-tile:hover .feature-media::after{
+  opacity: 0.88;
+}
+
+</style>
+
+
+<style>
+/* --- Departments grid consistency: 5-up on desktop, consistent gaps --- */
+#departments .tile-container{
+  display: grid !important;
+  gap: 8px !important;            /* consistent horizontal + vertical gap */
+  align-items: stretch;
+}
+@media (min-width: 1100px){
+  #departments .tile-container{
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+}
+@media (max-width: 1099px){
+  #departments .tile-container{
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  }
+}
+
+/* Ensure every tile fills its grid cell evenly */
+#departments .tile{ height: 100%; }
+#departments .tile-content{ height: 100%; }
+
+/* text color for company resources bubbles */
+#company-resources .resource-text,
+#company-resources .resource-text *{
+  color: #fff;
+}
+
+/* white / grey themes use dark text */
+.theme-white #company-resources .resource-text,
+.theme-white #company-resources .resource-text *,
+.theme-grey #company-resources .resource-text,
+.theme-grey #company-resources .resource-text *{
+  color: #111 !important;
+}
+
+
+/* Fix text color inside company resource card tiles */
+#company-resources .feature-card,
+#company-resources .feature-card *{
+  color: #ffffff !important;
+}
+
+/* dark text for light themes */
+.theme-white #company-resources .feature-card,
+.theme-white #company-resources .feature-card *,
+.theme-grey #company-resources .feature-card,
+.theme-grey #company-resources .feature-card *{
+  color: #111111 !important;
+}
+
+
+#company-resources .resource-copy{
+  min-height: 220px;
+  padding: 28px 32px;
+}
+
+
+/* scroll fade for tools */
+#tools .tool-tile,
+#tools .tool-icon,
+#tools .tool-item{
+  opacity:0;
+  transform: translateY(40px);
+  transition: all 0.6s ease;
+}
+
+#tools.reveal-active .tool-tile,
+#tools.reveal-active .tool-icon,
+#tools.reveal-active .tool-item{
+  opacity:1;
+  transform: translateY(0);
+}
+
+
+/* global smooth reveal */
+
+.reveal-item{
+  opacity:0;
+  transform: translateY(60px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+.reveal-item.active{
+  opacity:1;
+  transform: translateY(0);
+}
+
+
+/* ===== PREMIUM THEME-AWARE COMPANY RESOURCES ===== */
+
+#company-resources .resource-copy{
+  position: relative;
+  padding: clamp(16px, 2.2vw, 26px);
+  border-radius: 24px;
+
+  background:
+    radial-gradient(120% 120% at 20% 10%, rgba(var(--theme-glow1),0.35), rgba(0,0,0,0) 60%),
+    linear-gradient(135deg,
+      rgba(var(--theme-glow3), 0.78),
+      rgba(var(--theme-glow2), 0.65)
+    );
+
+  border: 1px solid rgba(var(--theme-glow1), 0.45);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.35),
+    0 0 40px rgba(var(--theme-glow1), .35),
+    inset 0 0 30px rgba(var(--theme-glow3), .35);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  color: #ffffff;
+  overflow: hidden;
+}
+
+#company-resources .resource-copy::after{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.0) 60%);
+  animation: resourceGlowMove 8s ease-in-out infinite;
+  pointer-events:none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes resourceGlowMove{
+  0%   { transform: translate(-8%, -6%) rotate(0deg); }
+  50%  { transform: translate(8%, 6%) rotate(180deg); }
+  100% { transform: translate(-8%, -6%) rotate(360deg); }
+}
+
+#company-resources .resource-cta{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 13px 18px;
+  border-radius: 16px;
+
+  background: linear-gradient(135deg,
+    var(--theme-accent),
+    rgba(var(--theme-glow1),0.95)
+  );
+
+  color: #ffffff;
+  font-weight: 950;
+  text-decoration: none;
+
+  border: 1px solid rgba(255,255,255,.35);
+
+  box-shadow:
+    0 16px 36px rgba(0,0,0,.35),
+    0 0 28px rgba(var(--theme-glow1), .65);
+
+  transition: transform .22s cubic-bezier(.2,.8,.2,1),
+              box-shadow .22s ease,
+              filter .22s ease;
+}
+
+#company-resources .resource-cta:hover{
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.12);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.45),
+    0 0 40px rgba(var(--theme-glow1), .85);
+}
+
+
+/* ===== Company Resource Image Gradient + Glow Pulse (Feature Tiles) ===== */
+
+#company-resources .feature-media{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Gradient overlay over PNG image */
+#company-resources .feature-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--theme-glow1), 0.55),
+    rgba(var(--theme-glow2), 0.30),
+    rgba(var(--theme-glow3), 0.70)
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.65;
+  transition: opacity .35s ease;
+}
+
+/* Premium glow pulse on hover */
+@keyframes resourcePulseGlow2{
+  0%   { box-shadow: 0 0 0 rgba(var(--theme-glow1), 0.0), 0 14px 36px rgba(0,0,0,0.18); }
+  50%  { box-shadow: 0 0 38px rgba(var(--theme-glow1), 0.85), 0 18px 46px rgba(0,0,0,0.22); }
+  100% { box-shadow: 0 0 0 rgba(var(--theme-glow1), 0.0), 0 14px 36px rgba(0,0,0,0.18); }
+}
+
+#company-resources .feature-tile:hover{
+  animation: resourcePulseGlow2 1.7s ease-in-out infinite;
+}
+
+#company-resources .feature-tile:hover .feature-media::after{
+  opacity: 0.88;
+}
+
+</style>
+
+</head>
+<body>
+  <div id="themeBg" aria-hidden="true">
+  <div class="theme-bg-layer is-active" id="themeBgA"></div>
+  <div class="theme-bg-layer is-idle" id="themeBgB"></div>
+</div>
+  <!-- FULL-SCREEN WELCOME (only shown if name not saved OR when editing) -->
+  <section id="welcome" class="welcome blue-glow fade-in" role="dialog" aria-modal="true" aria-label="Welcome">
+    <div class="welcome-inner" role="main" aria-live="polite">
+      <h1>Welcome</h1>
+      <p class="sub">Enter your name once and we’ll remember it for next time.</p>
+
+      <div class="name-editor" aria-label="Add your name section">
+        <label class="sr-only" for="nameInput">Your name</label>
+        <input id="nameInput" type="text" placeholder="Add your name" inputmode="text" autocomplete="name" />
+        <button id="saveBtn" type="button">Enter</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN APP (banner + tiles) -->
+  <div id="app" class="app" hidden>
+    <div id="stickyNav" class="sticky-nav" role="navigation" aria-label="Quick navigation">
+      <div class="sticky-inner">
+        <div class="sticky-title">Stingray Intranet</div>
+        <div class="sticky-actions">
+          <button type="button" class="sticky-btn" data-jump="#departments">Departments</button>
+          <button type="button" class="sticky-btn" data-jump="#tools">Tools</button>
+          <button type="button" class="sticky-btn" data-jump="#company-resources">Company Resources</button>
+          <button type="button" class="sticky-btn" data-jump="top">Back to Top</button>
+        </div>
+      </div>
+    </div>
+
+    <header class="banner blue-glow">
+
+<div class="theme-switch" id="themeSwitch">
+  <button type="button" class="theme-btn" id="themeBtn" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu" title="Change theme">
+    <span class="theme-dot" aria-hidden="true"></span>
+    Theme
+  </button>
+  <div class="theme-menu" id="themeMenu" role="menu" aria-label="Theme options">
+    <button class="theme-item" type="button" data-theme="white" role="menuitem" aria-label="White theme" title="White">
+      <span class="swatch" aria-hidden="true" style="background: #ffffff; border: 1px solid rgba(0,0,0,0.10);"></span>
+    </button>
+
+    
+<button class="theme-item" type="button" data-theme="grey" role="menuitem" aria-label="Grey theme" title="Grey">
+  <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(210,210,210,1), rgba(60,60,60,1));"></span>
+</button>
+<button class="theme-item" type="button" data-theme="pink" role="menuitem" aria-label="Pink theme" title="Pink">
+      <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(228,120,171,1), rgba(120,32,78,1));"></span>
+    </button>
+    <button class="theme-item" type="button" data-theme="purple" role="menuitem" aria-label="Purple theme" title="Purple">
+      <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(165,115,255,1), rgba(62,34,120,1));"></span>
+    </button>
+    <button class="theme-item" type="button" data-theme="yellow" role="menuitem" aria-label="Yellow theme" title="Yellow">
+      <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(255,210,74,1), rgba(160,108,0,1));"></span>
+    </button>
+    <button class="theme-item" type="button" data-theme="blue" role="menuitem" aria-label="Blue theme" title="Blue">
+      <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(0,112,209,1), rgba(0,27,77,1));"></span>
+    </button>
+    <button class="theme-item" type="button" data-theme="red" role="menuitem" aria-label="Red theme" title="Red">
+      <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(236,79,79,1), rgba(78,10,10,1));"></span>
+    </button>
+    <button class="theme-item" type="button" data-theme="black" role="menuitem" aria-label="Black theme" title="Black">
+      <span class="swatch" aria-hidden="true" style="background: linear-gradient(135deg, rgba(30,30,30,1), rgba(0,0,0,1)); border: 1px solid rgba(255,255,255,0.18);"></span>
+    </button>
+  </div>
+</div>
+      <div class="banner-row">
+        <div class="banner-title">
+          <span>Welcome</span>
+          <span class="name-wrap">
+            <span id="userName" class="name-inline">User</span>
+            <button id="editBtn" class="pencil-btn" type="button" aria-label="Edit your name" title="Edit your name">
+              <span class="pencil-icon" aria-hidden="true"></span>
+            </button>
+          </span>
+        </div>
+      </div>
+      <div class="banner-hint" aria-hidden="true">What do you need help with today?</div>
+      <nav class="jump-nav" aria-label="Page navigation">
+        <button type="button" class="jump-btn" data-jump="#departments">Departments</button>
+        <button type="button" class="jump-btn" data-jump="#tools">Tools</button>
+      <button type="button" class="jump-btn" data-jump="#company-resources">Company Resources</button>
+        </nav>
+    </header>
+    <div class="divider" aria-hidden="true"></div>
+
+    <main class="content">
+      <section id="departments" class="reveal-item" aria-label="Departments">
+      <div class="tile-container">
+
+<a href="#" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/it.png" class="default-image" alt="IT Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/it-hover.png" class="image-hover" alt="IT Department hover">
+              <div class="tile-label">IT Department</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Team-Selection.aspx" class="tile-link" target="_top" id="adminTileLink" data-open-admin-modal="1">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/admin.png" class="default-image" alt="Admin Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/admin-hover.png" class="image-hover" alt="Admin Department hover">
+              <div class="tile-label">Admin Department</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Art-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/art.png" class="default-image" alt="Art Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/art-hover.png" class="image-hover" alt="Art Department hover">
+              <div class="tile-label">Art Department</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Planning-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/planning.png" class="default-image" alt="Planning Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/planning-hover.png" class="image-hover" alt="Planning Department hover">
+              <div class="tile-label">Planning Department</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/E-com-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/e-com.png" class="default-image" alt="E-com Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/e-com-hover.png" class="image-hover" alt="E-com Department hover">
+              <div class="tile-label">E-com Department</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Quality-Control-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/quality.png" class="default-image" alt="Quality Control">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png" class="image-hover" alt="Quality Control hover">
+              <div class="tile-label">Quality Control</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Warehouse-Selection.aspx" class="tile-link" target="_top" id="warehouseTileLink" data-open-warehouse-modal="1">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/warehouse.png" class="default-image" alt="Warehouse">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/warehouse-hover.png" class="image-hover" alt="Warehouse hover">
+              <div class="tile-label">Warehouse</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Service-Department-Team-Selection.aspx" class="tile-link" target="_top" id="serviceTileLink" data-open-service-modal="1">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/service.png" class="default-image" alt="Service Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/service-hover.png" class="image-hover" alt="Service Department hover">
+              <div class="tile-label">Service Department</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Training%20Library/Forms/AllItems.aspx?npsAction=createList" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/training.png" class="default-image" alt="Training">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/training-hover.png" class="image-hover" alt="Training hover">
+              <div class="tile-label">Training</div>
+            </div>
+          </div>
+        </a>
+
+<a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Shipping-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/shipping.png" class="default-image" alt="Shipping Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/shipping-hover.png" class="image-hover" alt="Shipping Department hover">
+              <div class="tile-label">Shipping Department</div>
+            </div>
+          </div>
+        </a>
+
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Executives-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/executive1.png" class="default-image" alt="Executives">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/executive1.png" class="image-hover" alt="Executives hover">
+              <div class="tile-label">Executives</div>
+            </div>
+          </div>
+        </a>
+
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Human-Resources-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/admin.png" class="default-image" alt="Human Resources">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/admin-hover.png" class="image-hover" alt="Human Resources hover">
+              <div class="tile-label">Human Resources</div>
+            </div>
+          </div>
+        </a>
+
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Finance-Department-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/planning.png" class="default-image" alt="Finance Department">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/planning-hover.png" class="image-hover" alt="Finance Department hover">
+              <div class="tile-label">Finance Department</div>
+            </div>
+          </div>
+        </a>
+
+
+        <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Operations-Hub.aspx" class="tile-link" target="_top">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/warehouse.png" class="default-image" alt="Operations">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/warehouse-hover.png" class="image-hover" alt="Operations hover">
+              <div class="tile-label">Operations</div>
+            </div>
+          </div>
+        </a>
+
+
+        <a href="javascript:void(0)" class="tile-link" target="_top" id="kamsRepsTileLink" data-open-kamsreps-modal="1" aria-label="KAMS &amp; REPS">
+          <div class="tile">
+            <div class="tile-content">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/quality.png" class="default-image" alt="KAMS & REPS">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png" class="image-hover" alt="KAMS & REPS hover">
+              <div class="tile-label">KAMS & REPS</div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+      <!-- Big tiles (below departments) -->
+
+      
+      <!-- Tools quick actions (above Company Resources) -->
+      <div class="section-minihead">Tools</div>
+
+      <section id="tools" class="reveal-item" class="tools-section reveal" aria-label="Tools" style="--delay:0ms" data-delay>
+        <div class="tools-wrap" role="list">
+
+          <a role="listitem" class="tool-icon-tile" href="javascript:void(0)" id="teamsTool" aria-label="Teams tools">
+            <div class="tool-card">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                   src="https://stingraymanufacturers.github.io/departmenttiles/teams.png"
+                   alt="Teams">
+            </div>
+            <div class="tool-label">Teams</div>
+          </a>
+
+          <a role="listitem" class="tool-icon-tile" href="javascript:void(0)" id="copilotTool" aria-label="Open Copilot">
+            <div class="tool-card">
+              <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                   src="https://stingraymanufacturers.github.io/departmenttiles/copilot.png"
+                   alt="Copilot">
+            </div>
+            <div class="tool-label">Copilot</div>
+          </a>
+
+
+<a href="javascript:void(0)" role="listitem" class="tool-icon-tile" id="vpnTool" aria-label="OpenVPN">
+  <div class="tool-card">
+    <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+         src="https://stingraymanufacturers.github.io/departmenttiles/openvpn.png"
+         alt="VPN">
+  </div>
+  <div class="tool-label">OpenVPN</div>
+</a>
+
+
+
+<a role="listitem" class="tool-icon-tile" href="https://remote.stingray.co.za:8100/dispatcher/" target="_blank" rel="noopener" id="remoteSapTool" aria-label="Remote SAP">
+  <div class="tool-card">
+    <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+         src="https://stingraymanufacturers.github.io/departmenttiles/remotesap.png"
+         alt="Remote SAP">
+  </div>
+  <div class="tool-label">Remote SAP</div>
+</a>
+
+<a role="listitem" class="tool-icon-tile" href="https://stingrayacc.sharepoint.com/_layouts/15/sharepoint.aspx" target="_blank" rel="noopener" id="sharepointTool" aria-label="Open SharePoint">
+  <div class="tool-card">
+    <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+         src="https://stingraymanufacturers.github.io/departmenttiles/sharepoint.png"
+         alt="SharePoint">
+  </div>
+  <div class="tool-label">SharePoint</div>
+</a>
+
+        </div>
+      </section>
+
+
+
+            <div class="section-minihead">Company Resources</div>
+
+
+
+
+            <section id="company-resources" class="reveal-item" class="feature-section" aria-label="Company resources">
+        <div class="resource-zigzag" aria-label="Company resources">
+
+          <!-- 1) Employee of the Month -->
+          <div class="resource-row">
+            <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Employee-of-the-month.aspx" class="tile-link" target="_top" aria-label="Employee of the Month">
+              <div class="feature-tile reveal" data-delay style="--delay:0ms">
+                <div class="feature-inner">
+                  <div class="feature-media">
+                    <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/employeeofthemonth.png" alt="Employee of the Month">
+                  </div>
+                  <div class="feature-shine" aria-hidden="true"></div>
+                  <div class="feature-gradient" aria-hidden="true"></div>
+                </div>
+              </div>
+            </a>
+            <div class="resource-copy reveal" data-delay style="--delay:60ms">
+              <div class="resource-kicker">Company Resource</div>
+              <h3 class="resource-title">Employee of the Month</h3>
+              <p class="resource-desc">Celebrate top performers and see who’s been recognised this month.</p>
+              <a class="resource-cta" href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Employee-of-the-month.aspx" target="_top" aria-label="Open Employee of the Month">Open</a>
+            </div>
+          </div>
+
+          <!-- 2) Monthly Newsletter -->
+          <div class="resource-row reverse">
+            <div class="resource-copy reveal" data-delay style="--delay:0ms">
+              <div class="resource-kicker">Company Resource</div>
+              <h3 class="resource-title">Monthly Newsletter</h3>
+              <p class="resource-desc">All the updates, wins, and highlights — in one place.</p>
+              <a class="resource-cta" href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Monthly%20Newsletter/Forms/AllItems.aspx?npsAction=createList" target="_top" aria-label="Open Monthly Newsletter">Open</a>
+            </div>
+            <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Monthly%20Newsletter/Forms/AllItems.aspx?npsAction=createList" class="tile-link" target="_top" aria-label="Monthly Newsletter">
+              <div class="feature-tile reveal" data-delay style="--delay:70ms">
+                <div class="feature-inner">
+                  <div class="feature-media">
+                    <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/monthlynewsletter.png" alt="Monthly Newsletter">
+                  </div>
+                  <div class="feature-shine" aria-hidden="true"></div>
+                  <div class="feature-gradient" aria-hidden="true"></div>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <!-- 3) HR Forms -->
+          <div class="resource-row">
+            <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/HR%20Forms/Forms/AllItems.aspx?npsAction=createList" class="tile-link" target="_top" aria-label="HR Forms">
+              <div class="feature-tile reveal" data-delay style="--delay:140ms">
+                <div class="feature-inner">
+                  <div class="feature-media">
+                    <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/hrforms.png" alt="HR Forms" onerror="this.src='https://stingraymanufacturers.github.io/departmenttiles/monthlynewsletter.png'">
+                  </div>
+                  <div class="feature-shine" aria-hidden="true"></div>
+                  <div class="feature-gradient" aria-hidden="true"></div>
+                </div>
+              </div>
+            </a>
+            <div class="resource-copy reveal" data-delay style="--delay:200ms">
+              <div class="resource-kicker">Company Resource</div>
+              <h3 class="resource-title">HR Forms</h3>
+              <p class="resource-desc">Quick access to leave, requests, and HR documents.</p>
+              <a class="resource-cta" href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/HR%20Forms/Forms/AllItems.aspx?npsAction=createList" target="_top" aria-label="Open HR Forms">Open</a>
+            </div>
+          </div>
+
+          <!-- 4) ISO 9001 QMS Documents -->
+          <div class="resource-row reverse">
+            <div class="resource-copy reveal" data-delay style="--delay:0ms">
+              <div class="resource-kicker">Company Resource</div>
+              <h3 class="resource-title">ISO 9001 QMS Documents</h3>
+              <p class="resource-desc">Quality documentation, processes, and SOPs.</p>
+              <a class="resource-cta" href="https://stingrayacc.sharepoint.com/sites/ISO9001QMS/Shared%20Documents/Forms/AllItems.aspx" target="_top" aria-label="Open ISO 9001 QMS Documents">Open</a>
+            </div>
+            <a href="https://stingrayacc.sharepoint.com/sites/ISO9001QMS/Shared%20Documents/Forms/AllItems.aspx" class="tile-link" target="_top" aria-label="ISO 9001 QMS Documents">
+              <div class="feature-tile reveal" data-delay style="--delay:210ms">
+                <div class="feature-inner">
+                  <div class="feature-media">
+                    <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://stingraymanufacturers.github.io/departmenttiles/isodocuments.png" alt="ISO 9001 QMS Documents">
+                  </div>
+                  <div class="feature-shine" aria-hidden="true"></div>
+                  <div class="feature-gradient" aria-hidden="true"></div>
+                </div>
+              </div>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+<div id="adminModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Admin Department options">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div class="modal-title">Admin Department — choose a team</div>
+        <button type="button" class="modal-close" id="adminModalClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid">
+          <!-- Replace href targets with your real SharePoint pages -->
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub.aspx" class="tile-link" target="_top" aria-label="Sales">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/admin.png"
+                     class="default-image" alt="Sales">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/admin-hover.png"
+                     class="image-hover" alt="Sales hover">
+                <div class="tile-label">Sales</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Debtors-Department-Hub.aspx" class="tile-link" target="_top" aria-label="Debtors">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality.png"
+                     class="default-image" alt="Debtors">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png"
+                     class="image-hover" alt="Debtors hover">
+                <div class="tile-label">Debtors</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub-JHB.aspx" class="tile-link" target="_top" aria-label="JHB Admin">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/warehouse.png"
+                     class="default-image" alt="JHB Admin">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/warehouse-hover.png"
+                     class="image-hover" alt="JHB Admin hover">
+                <div class="tile-label">JHB Admin</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Warehouse tile pop-up (Production / Dispatch / Receiving / FG Stores) ===== -->
+  <div id="warehouseModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Warehouse options">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div class="modal-title">Warehouse — choose a team</div>
+        <button type="button" class="modal-close" id="warehouseModalClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid">
+          <!-- Replace href targets with your real SharePoint pages -->
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Production-Department-Hub.aspx" class="tile-link" target="_top" aria-label="Production">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/planning.png"
+                     class="default-image" alt="Production">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/planning-hover.png"
+                     class="image-hover" alt="Production hover">
+                <div class="tile-label">Production</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Invoicing-Hub.aspx" class="tile-link" target="_top" aria-label="Dispatch">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/shipping.png"
+                     class="default-image" alt="Dispatch">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/shipping-hover.png"
+                     class="image-hover" alt="Dispatch hover">
+                <div class="tile-label">Dispatch</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Receiving-Department-Hub.aspx" class="tile-link" target="_top" aria-label="Receiving">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/warehouse.png"
+                     class="default-image" alt="Receiving">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/warehouse-hover.png"
+                     class="image-hover" alt="Receiving hover">
+                <div class="tile-label">Receiving</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/FG-Stores-Hub.aspx" class="tile-link" target="_top" aria-label="FG Stores">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality.png"
+                     class="default-image" alt="FG Stores">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png"
+                     class="image-hover" alt="FG Stores hover">
+                <div class="tile-label">FG Stores</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Service tile pop-up (Cape Town / Johannesburg) ===== -->
+  <div id="serviceModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Service Department options">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div class="modal-title">Service Department — choose a branch</div>
+        <button type="button" class="modal-close" id="serviceModalClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid">
+          <!-- Replace href targets with your real SharePoint pages -->
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Cpt-Service-Department-Hub.aspx" class="tile-link" target="_top" aria-label="Cape Town">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/service.png"
+                     class="default-image" alt="Cape Town">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/service-hover.png"
+                     class="image-hover" alt="Cape Town hover">
+                <div class="tile-label">Cape Town</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/JHB-Service-Department-Hub.aspx" class="tile-link" target="_top" aria-label="Johannesburg">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/service.png"
+                     class="default-image" alt="Johannesburg">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/service-hover.png"
+                     class="image-hover" alt="Johannesburg hover">
+                <div class="tile-label">Johannesburg</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- ===== KAMS & REPS tile pop-up (KAMS / REPS) ===== -->
+  <div id="kamsRepsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="KAMS and REPS options">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div class="modal-title">KAMS &amp; REPS — choose a section</div>
+        <button type="button" class="modal-close" id="kamsRepsModalClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid">
+          <!-- Replace href targets with your real pages -->
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/KAMs-Hub.aspx" class="tile-link" target="_top" aria-label="KAMS">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality.png"
+                     class="default-image" alt="KAMS">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png"
+                     class="image-hover" alt="KAMS hover">
+                <div class="tile-label">KAMS</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Sales-Reps-Hub.aspx" class="tile-link" target="_top" aria-label="REPS">
+            <div class="tile">
+              <div class="tile-content">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality.png"
+                     class="default-image" alt="REPS">
+                <img loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     src="https://stingraymanufacturers.github.io/departmenttiles/quality-hover.png"
+                     class="image-hover" alt="REPS hover">
+                <div class="tile-label">REPS</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Teams quick actions overlay -->
+  <div id="teamsOverlay" class="tool-overlay" aria-hidden="true">
+    <div class="tool-overlay-backdrop" data-close="teams"></div>
+
+    <div class="teams-fab-wrap" role="dialog" aria-modal="true" aria-label="Teams tools">
+      <div class="teams-fab-rail" id="teamsFabRail" aria-hidden="true">
+<a class="mini-tool" href="#" target="_top" data-teams-action="chat" aria-label="Start a new chat">
+  <span class="mini-icon">💬</span>
+  <span class="mini-text">New chat</span>
+</a>
+
+<a class="mini-tool" href="#" target="_top" data-teams-action="calendar" aria-label="Open your calendar">
+  <span class="mini-icon">🗓️</span>
+  <span class="mini-text">Calendar</span>
+</a>
+
+<a class="mini-tool" target="_top"
+   href="#" data-teams-action="meeting"
+   aria-label="Create a Teams meeting">
+  <span class="mini-icon">📅</span>
+  <span class="mini-text">Meeting</span>
+</a>
+
+</div>
+
+      <button type="button" class="tool-close" data-close="teams" aria-label="Close Teams tools">×</button>
+    </div>
+  </div>
+
+
+  <script>
+    
+// ===== Teams deep-link (Desktop App Only) =====
+// Uses official Teams deep-link formats where available (https://teams.microsoft.com/l/...)
+// and opens via the msteams:// protocol (no web fallback).
+(function(){
+
+  const TEAMS_APP = {
+    // Chat view (generic) — opens the chat area
+    chat:     "msteams://teams.microsoft.com/l/chat/0/0",
+    // Calendar view isn't currently documented as an /l/ deep link; v2 route works for many tenants.
+    calendar: "msteams://teams.microsoft.com/v2/calendar",
+    // Meeting scheduling dialog (opens inside Teams)
+    meeting:  "msteams://teams.microsoft.com/l/meeting/new"
+  };
+
+  function tryOpenProtocol(url){
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    setTimeout(() => { try { document.body.removeChild(iframe); } catch(e){} }, 1200);
+  }
+
+  window.openTeamsSmart = function(action){
+    const appUrl = TEAMS_APP[action] || TEAMS_APP.chat;
+    tryOpenProtocol(appUrl);
+  };
+
+  // Wire up the overlay mini tools
+  document.addEventListener("click", function(e){
+    const a = e.target && e.target.closest ? e.target.closest("a[data-teams-action]") : null;
+    if(!a) return;
+    e.preventDefault();
+    const action = a.getAttribute("data-teams-action");
+    window.openTeamsSmart(action);
+  }, true);
+
+})();
+
+// ===== Name persistence + UI switching =====
+    (function(){
+      const STORAGE_KEY = 'displayName';
+
+      const welcomeEl = document.getElementById('welcome');
+      const appEl     = document.getElementById('app');
+
+      const userNameEl = document.getElementById('userName');
+      const inputEl  = document.getElementById('nameInput');
+      const saveBtn  = document.getElementById('saveBtn');
+      const editBtn  = document.getElementById('editBtn');
+
+      function getSavedName(){
+        try{ return (localStorage.getItem(STORAGE_KEY) || '').trim(); }
+        catch(e){ return ''; }
+      }
+      function setSavedName(name){
+        try{ localStorage.setItem(STORAGE_KEY, name); }catch(e){}
+      }
+
+      function showWelcome(show){
+        welcomeEl.style.display = show ? 'grid' : 'none';
+        if(show){
+          // keep value in sync when editing
+          inputEl.value = (getSavedName() || userNameEl.textContent || '').trim();
+          setTimeout(()=>{ inputEl.focus(); inputEl.select(); }, 0);
+        }
+      }
+
+      function showApp(show){
+        appEl.hidden = !show;
+      }
+
+      function setName(name){
+        if(!name) return;
+        userNameEl.textContent = name;
+      }
+
+      function save(){
+        const name = (inputEl.value || '').trim();
+        if(!name) return;
+        setSavedName(name);
+        setName(name);
+        showWelcome(false);
+        showApp(true);
+      }
+
+      // init
+      const saved = getSavedName();
+      if(saved){
+        setName(saved);
+        showWelcome(false);
+        showApp(true);
+      } else {
+        showApp(false);
+        showWelcome(true);
+      }
+
+      saveBtn.addEventListener('click', save);
+      inputEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') save(); });
+      editBtn.addEventListener('click', ()=> showWelcome(true));
+    })();
+
+
+    // ===== Admin tile modal (Sales / Debtors / JHB Admin) =====
+    (function(){
+      const openLink = document.getElementById("adminTileLink");
+      const modal = document.getElementById("adminModal");
+      const closeBtn = document.getElementById("adminModalClose");
+      if(!openLink || !modal || !closeBtn) return;
+
+      const focusableSel = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      let lastActive = null;
+
+      function openModal(e){
+        if(e) e.preventDefault();
+        lastActive = document.activeElement;
+
+        modal.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+
+        // focus close button
+        closeBtn.focus();
+      }
+
+      function closeModal(){
+        modal.classList.remove("is-open");
+        document.body.style.overflow = "";
+
+        if(lastActive && typeof lastActive.focus === "function"){
+          lastActive.focus();
+        }
+      }
+
+      openLink.addEventListener("click", openModal);
+
+      closeBtn.addEventListener("click", closeModal);
+
+      // click outside panel closes
+      modal.addEventListener("click", (e) => {
+        if(e.target === modal) closeModal();
+      });
+
+      // ESC closes + simple focus trap
+      document.addEventListener("keydown", (e) => {
+        if(!modal.classList.contains("is-open")) return;
+
+        if(e.key === "Escape"){
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+
+        if(e.key === "Tab"){
+          const focusables = modal.querySelectorAll(focusableSel);
+          if(!focusables.length) return;
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault();
+            last.focus();
+          }else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+    })();
+
+    // ===== Warehouse tile modal (Production / Dispatch / Receiving / FG Stores) =====
+    (function(){
+      const openLink = document.getElementById("warehouseTileLink");
+      const modal = document.getElementById("warehouseModal");
+      const closeBtn = document.getElementById("warehouseModalClose");
+      if(!openLink || !modal || !closeBtn) return;
+
+      const focusableSel = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      let lastActive = null;
+
+      function openModal(e){
+        if(e) e.preventDefault();
+        lastActive = document.activeElement;
+        modal.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+        closeBtn.focus();
+      }
+
+      function closeModal(){
+        modal.classList.remove("is-open");
+        document.body.style.overflow = "";
+        if(lastActive && typeof lastActive.focus === "function") lastActive.focus();
+      }
+
+      openLink.addEventListener("click", openModal);
+      closeBtn.addEventListener("click", closeModal);
+
+      modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+
+      document.addEventListener("keydown", (e) => {
+        if(!modal.classList.contains("is-open")) return;
+
+        if(e.key === "Escape"){
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+
+        if(e.key === "Tab"){
+          const focusables = modal.querySelectorAll(focusableSel);
+          if(!focusables.length) return;
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault(); last.focus();
+          }else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault(); first.focus();
+          }
+        }
+      });
+    })();
+
+
+    // ===== Service tile modal (Cape Town / Johannesburg) =====
+    (function(){
+      const openLink = document.getElementById("serviceTileLink");
+      const modal = document.getElementById("serviceModal");
+      const closeBtn = document.getElementById("serviceModalClose");
+      if(!openLink || !modal || !closeBtn) return;
+
+      const focusableSel = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      let lastActive = null;
+
+      function openModal(e){
+        if(e) e.preventDefault();
+        lastActive = document.activeElement;
+        modal.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+        closeBtn.focus();
+      }
+
+      function closeModal(){
+        modal.classList.remove("is-open");
+        document.body.style.overflow = "";
+        if(lastActive && typeof lastActive.focus === "function") lastActive.focus();
+      }
+
+      openLink.addEventListener("click", openModal);
+      closeBtn.addEventListener("click", closeModal);
+
+      modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+
+      document.addEventListener("keydown", (e) => {
+        if(!modal.classList.contains("is-open")) return;
+
+        if(e.key === "Escape"){
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+
+        if(e.key === "Tab"){
+          const focusables = modal.querySelectorAll(focusableSel);
+          if(!focusables.length) return;
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault(); last.focus();
+          }else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault(); first.focus();
+          }
+        }
+      });
+    })();
+
+
+
+    
+
+    // ===== KAMS & REPS tile modal (KAMS / REPS) =====
+    (function(){
+      const openLink = document.getElementById("kamsRepsTileLink");
+      const modal = document.getElementById("kamsRepsModal");
+      const closeBtn = document.getElementById("kamsRepsModalClose");
+      if(!openLink || !modal || !closeBtn) return;
+
+      const focusableSel = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      let lastActive = null;
+
+      function openModal(e){
+        if(e) e.preventDefault();
+        lastActive = document.activeElement;
+        modal.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+        closeBtn.focus();
+      }
+
+      function closeModal(){
+        modal.classList.remove("is-open");
+        document.body.style.overflow = "";
+        if(lastActive && typeof lastActive.focus === "function") lastActive.focus();
+      }
+
+      openLink.addEventListener("click", openModal);
+      closeBtn.addEventListener("click", closeModal);
+
+      modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+
+      document.addEventListener("keydown", (e) => {
+        if(!modal.classList.contains("is-open")) return;
+
+        if(e.key === "Escape"){
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+
+        if(e.key === "Tab"){
+          const focusables = modal.querySelectorAll(focusableSel);
+          if(!focusables.length) return;
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault(); last.focus();
+          }else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault(); first.focus();
+          }
+        }
+      });
+    })();
+
+
+
+    // ===== Background image carousel for #welcome and .banner (your 16–23 images) =====
+    (function(){
+      const bgImages = [
+        "https://stingraymanufacturers.github.io/departmenttiles/16.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/17.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/18.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/19.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/20.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/21.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/22.jpg",
+        "https://stingraymanufacturers.github.io/departmenttiles/23.jpg"
+      ];
+
+      const targets = [
+        document.getElementById("welcome"),
+        document.querySelector(".banner")
+      ].filter(Boolean);
+
+      if(!targets.length || !bgImages.length) return;
+
+      function preload(url){
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.referrerPolicy = "no-referrer";
+          img.src = url;
+        });
+      }
+
+      targets.forEach(t => {
+        if(t.querySelector(".bg-layer")) return;
+
+        const a = document.createElement("div");
+        const b = document.createElement("div");
+        a.className = "bg-layer is-active zoom";
+        b.className = "bg-layer is-idle";
+
+        // Put layers behind content
+        t.insertBefore(b, t.firstChild);
+        t.insertBefore(a, t.firstChild);
+
+        a.style.backfaceVisibility = "hidden";
+        b.style.backfaceVisibility = "hidden";
+      });
+
+      let index = 0;
+      const intervalMs = 5200;
+      const fadeGuardMs = 1400;
+
+      // Initial images
+      targets.forEach(t => {
+        const layers = t.querySelectorAll(".bg-layer");
+        layers[0].style.backgroundImage = `url("${bgImages[0]}")`;
+        layers[1].style.backgroundImage = `url("${bgImages[1] || bgImages[0]}")`;
+      });
+      index = 1;
+
+      let swapping = false;
+
+      async function swap(){
+        if(swapping) return;
+        swapping = true;
+
+        const nextUrl = bgImages[(index + 1) % bgImages.length];
+        await preload(nextUrl);
+
+        targets.forEach(t => {
+          const layers = Array.from(t.querySelectorAll(".bg-layer"));
+          const top = layers[0], bottom = layers[1];
+          const active = top.classList.contains("is-active") ? top : bottom;
+          const idle   = active === top ? bottom : top;
+
+          idle.style.backgroundImage = `url("${nextUrl}")`;
+
+          idle.classList.remove("is-idle");
+          idle.classList.add("is-active");
+
+          // restart zoom animation cleanly on each new image
+          idle.classList.remove("zoom");
+          void idle.offsetHeight;
+          idle.classList.add("zoom");
+
+          active.classList.remove("is-active");
+          active.classList.add("is-idle");
+          active.classList.remove("zoom");
+        });
+
+        index = (index + 1) % bgImages.length;
+        setTimeout(() => { swapping = false; }, fadeGuardMs);
+      }
+
+      setInterval(swap, intervalMs);
+    })();
+    // ===== Background image parallax on hover (subtle) =====
+    (function(){
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduce) return;
+
+      const targets = [
+        document.getElementById("welcome"),
+        document.querySelector(".banner")
+      ].filter(Boolean);
+
+      if(!targets.length) return;
+
+      const MAX = 14; // px
+      function setVars(el, x, y){
+        const tx = (x * MAX).toFixed(2) + "px";
+        const ty = (y * MAX).toFixed(2) + "px";
+        el.style.setProperty("--bgpx", tx);
+        el.style.setProperty("--bgpy", ty);
+      }
+
+      targets.forEach(el => {
+        el.addEventListener("mousemove", (e) => {
+          const r = el.getBoundingClientRect();
+          const px = (e.clientX - r.left) / (r.width || 1);
+          const py = (e.clientY - r.top) / (r.height || 1);
+          setVars(el, (px - 0.5), (py - 0.5));
+        }, { passive:true });
+
+        el.addEventListener("mouseleave", () => {
+          el.style.setProperty("--bgpx", "0px");
+          el.style.setProperty("--bgpy", "0px");
+        });
+
+        el.addEventListener("touchmove", (e) => {
+          const t = e.touches && e.touches[0];
+          if(!t) return;
+          const r = el.getBoundingClientRect();
+          const px = (t.clientX - r.left) / (r.width || 1);
+          const py = (t.clientY - r.top) / (r.height || 1);
+          setVars(el, (px - 0.5), (py - 0.5));
+        }, { passive:true });
+      });
+    })();
+
+
+    // ===== Interactive glow: welcome + banner cursor tracking =====
+    (function () {
+      const r = document.documentElement;
+      const banner = document.querySelector('.banner');
+      const welcome = document.getElementById('welcome');
+
+      const targets = [banner, welcome].filter(Boolean);
+      if(!targets.length) return;
+
+      let raf = null;
+      let targetX = 0.5, targetY = 0.45;
+      let animX = targetX, animY = targetY;
+      let active = false;
+
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function tick() {
+        if(!active) {
+          raf = null;
+          return;
+        }
+
+        const k = 0.18;
+        animX += (targetX - animX) * k;
+        animY += (targetY - animY) * k;
+
+        r.style.setProperty('--mx', (animX * 100).toFixed(3) + '%');
+        r.style.setProperty('--my', (animY * 100).toFixed(3) + '%');
+
+        raf = requestAnimationFrame(tick);
+      }
+
+      function setTargetFromClient(el, x, y) {
+        const rect = el.getBoundingClientRect();
+        const w = rect.width || 1;
+        const h = rect.height || 1;
+
+        targetX = Math.min(1, Math.max(0, (x - rect.left) / w));
+        targetY = Math.min(1, Math.max(0, (y - rect.top) / h));
+      }
+
+      function start() {
+        if (raf === null && !reduce) raf = requestAnimationFrame(tick);
+      }
+
+      targets.forEach((el) => {
+        el.addEventListener('mouseenter', () => {
+          active = true;
+          start();
+        });
+
+        el.addEventListener('mouseleave', () => {
+          active = false; // keep last values (no snap back)
+        });
+
+        el.addEventListener('mousemove', (e) => {
+          if(!active) return;
+          setTargetFromClient(el, e.clientX, e.clientY);
+          start();
+        }, { passive: true });
+
+        el.addEventListener('touchmove', (e) => {
+          if(!active) return;
+          const t = e.touches && e.touches[0];
+          if (!t) return;
+          setTargetFromClient(el, t.clientX, t.clientY);
+          start();
+        }, { passive: true });
+      });
+
+      // Initial position
+      r.style.setProperty('--mx', '50%');
+      r.style.setProperty('--my', '45%');
+    })();
+
+    // ===== Section 3 reveal on scroll =====
+    (function(){
+      const els = document.querySelectorAll('.reveal');
+      if(!els.length) return;
+
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduce){
+        els.forEach(el => el.classList.add('in-view'));
+        return;
+      }
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if(entry.isIntersecting){
+            entry.target.classList.add('in-view');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+
+      els.forEach(el => io.observe(el));
+    })();
+
+    // ===== Department tile parallax (image follows cursor) =====
+    (function(){
+      const tiles = document.querySelectorAll('.tile');
+      if(!tiles.length) return;
+
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduce) return;
+
+      const MAX = 10; // px movement range
+
+      tiles.forEach(tile => {
+        const content = tile.querySelector('.tile-content');
+        if(!content) return;
+
+        function setVars(x, y){
+          const tx = (x * MAX).toFixed(2) + 'px';
+          const ty = (y * MAX).toFixed(2) + 'px';
+          content.style.setProperty('--tx', tx);
+          content.style.setProperty('--ty', ty);
+        }
+
+        tile.addEventListener('mousemove', (e) => {
+          const r = tile.getBoundingClientRect();
+          const px = (e.clientX - r.left) / (r.width || 1);
+          const py = (e.clientY - r.top) / (r.height || 1);
+          setVars(px - 0.5, py - 0.5);
+        }, { passive: true });
+
+        tile.addEventListener('mouseleave', () => {
+          content.style.setProperty('--tx', '0px');
+          content.style.setProperty('--ty', '0px');
+        });
+      });
+    })();
+
+    // ===== Jump navigation (banner + sticky) =====
+    (function(){
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function smoothScrollTo(target){
+        if(target === 'top'){
+          window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+          return;
+        }
+        const el = document.querySelector(target);
+        if(!el) return;
+        el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      }
+
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-jump]');
+        if(!btn) return;
+        const target = btn.getAttribute('data-jump');
+        smoothScrollTo(target);
+      });
+
+      const sticky = document.getElementById('stickyNav');
+      const banner = document.querySelector('.banner');
+      if(!sticky || !banner) return;
+
+      function onScroll(){
+        const showAt = banner.getBoundingClientRect().height * 0.65;
+        if(window.scrollY > showAt){
+          sticky.classList.add('is-visible');
+        }else{
+          sticky.classList.remove('is-visible');
+        }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+
+
+    // ===== Tools: Teams overlay mini actions (no navigation) =====
+    (function(){
+      const teamsTool = document.getElementById('teamsTool');
+      const overlay = document.getElementById('teamsOverlay');
+      const rail = document.getElementById('teamsFabRail');
+      if(!teamsTool || !overlay || !rail) return;
+
+      function positionOverlay(){
+        const r = teamsTool.getBoundingClientRect();
+        const wrap = overlay.querySelector('.teams-fab-wrap');
+        if(!wrap) return;
+        // Place the mini tools above the Teams circle tile
+        const top = Math.max(90, r.top - 120);
+        wrap.style.top = top + 'px';
+      }
+
+      function openOverlay(e){
+        if(e){
+          e.preventDefault();
+          e.stopPropagation();
+          if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+        }
+        positionOverlay();
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden','false');
+        rail.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeOverlay(){
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden','true');
+        rail.setAttribute('aria-hidden','true');
+        document.body.style.overflow = '';
+      }
+
+      // Capture phase to prevent any parent handlers from hijacking the click
+      teamsTool.addEventListener('click', openOverlay, true);
+
+      overlay.addEventListener('click', (e)=>{
+        const close = e.target.closest('[data-close="teams"]');
+        if(close) closeOverlay();
+      });
+
+      window.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && overlay.classList.contains('is-open')) closeOverlay();
+      });
+
+      window.addEventListener('resize', ()=>{
+        if(overlay.classList.contains('is-open')) positionOverlay();
+      }, { passive:true });
+
+      window.addEventListener('scroll', ()=>{
+        if(overlay.classList.contains('is-open')) positionOverlay();
+      }, { passive:true });
+    })();
+</script>
+<!-- Copilot sidebar overlay (tries iframe, always offers "Open in new tab") -->
+<div id="copilotOverlay" class="copilot-overlay" aria-hidden="true">
+  <div class="copilot-backdrop" data-close="copilot"></div>
+
+  <aside class="copilot-drawer" role="dialog" aria-modal="true" aria-label="Copilot">
+    <header class="copilot-head">
+      <div class="copilot-title">Copilot</div>
+      <div class="copilot-actions">
+        <a class="copilot-open"
+           href="https://m365.cloud.microsoft/chat/?auth=2&home=1&fromcode=cmm6e0ny53n"
+           target="_blank" rel="noopener"
+           aria-label="Open Copilot in a new tab">
+          Open in new tab
+        </a>
+        <button type="button" class="copilot-close" data-close="copilot" aria-label="Close">×</button>
+      </div>
+    </header>
+
+    <div class="copilot-body">
+      <div class="copilot-launch">
+  <div class="copilot-launch-card">
+    <div class="copilot-launch-title">Copilot can’t open inside this page</div>
+    <div class="copilot-launch-text">
+      Microsoft blocks Copilot from being embedded inside an intranet page for security.
+      Use the button below to open Copilot in a side window without reloading your intranet.
+    </div>
+
+    <button type="button" class="copilot-launch-btn" id="copilotLaunchBtn">
+      Open Copilot in side window
+    </button>
+
+    <div class="copilot-launch-hint">
+      If your browser blocks pop-ups, allow pop-ups for this SharePoint site and try again.
+    </div>
+  </div>
+</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+  // ===== Copilot: open in side window only (reuse same window) =====
+  (function(){
+    const COPILOT_URL = "https://m365.cloud.microsoft/chat/?auth=2&home=1&fromcode=cmm6e0ny53n";
+    let copilotWin = null;
+
+    function openCopilotPopup(){
+      const w = 520;
+      const h = Math.min(900, Math.max(640, window.screen.height - 120));
+      const left = Math.max(0, window.screenX + window.outerWidth - w - 18);
+      const top  = Math.max(0, window.screenY + 60);
+
+      const features = [
+        "popup=yes",
+        "noopener=yes",
+        "noreferrer=yes",
+        "width=" + w,
+        "height=" + h,
+        "left=" + left,
+        "top=" + top,
+        "resizable=yes",
+        "scrollbars=yes"
+      ].join(",");
+
+      // Reuse existing window if still open
+      if(copilotWin && !copilotWin.closed){
+        try{
+          copilotWin.focus();
+          return;
+        }catch(e){}
+      }
+
+      // Open new if none exists
+      copilotWin = window.open(COPILOT_URL, "stingrayCopilot", features);
+      if(copilotWin){
+        try{ copilotWin.focus(); }catch(e){}
+      }
+    }
+
+    function bind(){
+      document.addEventListener("click", function(e){
+        const openTile = e.target && e.target.closest ? e.target.closest("#copilotTool") : null;
+        if(openTile){
+          e.preventDefault();
+          openCopilotPopup();
+          return;
+        }
+      }, true);
+    }
+
+    if(document.readyState === "loading"){
+      document.addEventListener("DOMContentLoaded", bind);
+    }else{
+      bind();
+    }
+  })();
+</script>
+<script>
+  // ===== VPN tile (pre-installed profile) =====
+  // Opens the OpenVPN Connect app only (no import). Users connect manually inside the app.
+  (function(){
+    function tryOpenProtocol(url){
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch(e){} }, 1200);
+    }
+
+    function openOpenVPNApp(){
+      // App-only launcher (should not show import confirmation)
+      tryOpenProtocol("openvpn-connect://");
+    }
+
+    function bind(){
+      document.addEventListener("click", function(e){
+        const tile = e.target && e.target.closest ? e.target.closest("#vpnTool") : null;
+        if(!tile) return;
+        e.preventDefault();
+        openOpenVPNApp();
+      }, true);
+    }
+
+    if(document.readyState === "loading"){
+      document.addEventListener("DOMContentLoaded", bind);
+    }else{
+      bind();
+    }
+  })();
+</script>
+
+<script>
+  // ===== Theme Switcher (banner) =====
+  (function(){
+    const THEMES = {
+
+      white: {
+        bg: 'none',
+        accent: '#002c73',
+        glow1: '170,170,170',
+        glow2: '120,120,120',
+        glow3: '80,80,80',
+        wash0: '255,255,255'
+      },
+
+grey: {
+  bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/grey.png")',
+  accent: '#5f5f5f',
+  glow1: '210,210,210',
+  glow2: '155,155,155',
+  glow3: '70,70,70',
+  wash0: '40,40,40'
+},
+
+      blue: {
+        bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/newblue.png")',
+        accent: '#002c73',
+        glow1: '0,112,209',
+        glow2: '0,74,174',
+        glow3: '0,44,115',
+        wash0: '0,27,77'
+      },
+      pink: {
+        bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/dirtypink.jpg")',
+        accent: '#b2346e',
+        glow1: '228,120,171',
+        glow2: '186,72,128',
+        glow3: '120,32,78',
+        wash0: '64,14,36'
+      },
+      purple: {
+        bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/newpurple.png")',
+        accent: '#5d3bd6',
+        glow1: '165,115,255',
+        glow2: '126,84,224',
+        glow3: '92,60,178',
+        wash0: '44,26,92'
+      },
+      yellow: {
+        bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/yellow.png")',
+        accent: '#a86b00',
+        glow1: '255,210,74',
+        glow2: '255,179,34',
+        glow3: '208,136,0',
+        wash0: '96,70,0'
+      },
+      black: {
+        bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/black.png")',
+        accent: '#111111',
+        glow1: '255,255,255',
+        glow2: '180,180,180',
+        glow3: '90,90,90',
+        wash0: '0,0,0'
+      },
+      red: {
+        bg: 'url("https://stingraymanufacturers.github.io/departmenttiles/newred.png")',
+        accent: '#b21d1d',
+        glow1: '236,79,79',
+        glow2: '210,48,48',
+        glow3: '154,22,22',
+        wash0: '78,10,10'
+      }
+    
+    };
+
+    const root = document.documentElement;
+    const switchEl = document.getElementById('themeSwitch');
+    const btn = document.getElementById('themeBtn');
+    const menu = document.getElementById('themeMenu');
+
+    // Smooth theme background crossfade (preload + 2-layer swap)
+    const bgLayerA = document.getElementById('themeBgA');
+    const bgLayerB = document.getElementById('themeBgB');
+    let bgActive = 'A';
+
+    function extractUrl(bgValue){
+      const m = /url\(["']?(.+?)["']?\)/.exec(String(bgValue || ''));
+      return m ? m[1] : '';
+    }
+
+    // Preload all theme backgrounds to remove the "blank" delay on first switch
+    (function preloadThemeBgs(){
+      try{
+        Object.keys(THEMES).forEach(k => {
+          const u = extractUrl(THEMES[k]?.bg);
+          if(!u) return;
+          const img = new Image();
+          img.decoding = 'async';
+          img.loading = 'eager';
+          img.src = u;
+        });
+      }catch(e){}
+    })();
+
+
+    if(!switchEl || !btn || !menu) return;
+
+    function applyTheme(key, opts){
+      const t = THEMES[key] || THEMES.white;
+      const instant = !!(opts && opts.instant);
+
+      const setVars = () => {
+        root.style.setProperty('--theme-bg', t.bg);
+        root.style.setProperty('--theme-accent', t.accent);
+        root.style.setProperty('--theme-glow1', t.glow1);
+        root.style.setProperty('--theme-glow2', t.glow2);
+        root.style.setProperty('--theme-glow3', t.glow3);
+        root.style.setProperty('--theme-wash0', t.wash0);
+      };
+
+      // Smooth background swap using the fixed #themeBg layers
+      const next = (bgActive === 'A') ? bgLayerB : bgLayerA;
+      const curr = (bgActive === 'A') ? bgLayerA : bgLayerB;
+
+      const commitThemeMeta = () => {
+        document.body.setAttribute('data-theme', key);
+        try{ localStorage.setItem('srTheme', key); }catch(e){}
+      };
+
+      // If layers aren't found for some reason, fall back to CSS variable only
+      if(!next || !curr){
+        setVars();
+        commitThemeMeta();
+        return;
+      }
+
+      const url = extractUrl(t.bg);
+
+      const commitSwap = () => {
+        // Apply theme colors + metadata at the exact moment the fade starts
+        setVars();
+        commitThemeMeta();
+
+        next.style.backgroundImage = t.bg;
+
+        if(instant){
+          // First load: set both layers to the same image and show instantly (no fade)
+          bgLayerA.style.backgroundImage = t.bg;
+          bgLayerB.style.backgroundImage = t.bg;
+
+          bgLayerA.classList.add('is-active');
+          bgLayerA.classList.remove('is-idle');
+          bgLayerB.classList.add('is-idle');
+          bgLayerB.classList.remove('is-active');
+
+          bgActive = 'A';
+          return;
+        }
+
+        // Animate: fade new in, old out
+        next.classList.add('is-active');
+        next.classList.remove('is-idle');
+        curr.classList.remove('is-active');
+        curr.classList.add('is-idle');
+        bgActive = (bgActive === 'A') ? 'B' : 'A';
+      };
+
+      // Ensure image is loaded before fading (prevents "flash" / delay)
+      if(url){
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => requestAnimationFrame(commitSwap);
+        img.onerror = () => requestAnimationFrame(commitSwap); // still swap (cached/blocked)
+        img.src = url;
+      }else{
+        requestAnimationFrame(commitSwap);
+      }
+    }
+
+function openMenu(open){
+      const isOpen = open ?? !switchEl.classList.contains('is-open');
+      switchEl.classList.toggle('is-open', isOpen);
+      btn.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    // load saved theme
+    let saved = 'white';
+    try{ saved = localStorage.getItem('srTheme') || 'white'; }catch(e){}
+    applyTheme(saved, { instant: true });
+
+    // toggle menu
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMenu();
+    });
+
+    // pick theme
+    menu.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-theme]');
+      if(!item) return;
+      applyTheme(item.getAttribute('data-theme'));
+      openMenu(false);
+    });
+
+    // click outside closes
+    document.addEventListener('click', () => openMenu(false));
+
+    // esc closes
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape') openMenu(false);
+    });
+  })();
+
+
+  // ===== Company Resources slider (single massive tile + edge peek) =====
+  (function(){
+    const section = document.getElementById('company-resources');
+    if(!section) return;
+
+    const track = section.querySelector('.resource-track');
+    const viewport = section.querySelector('.resource-viewport');
+    const prevBtn = section.querySelector('.resource-nav.prev');
+    const nextBtn = section.querySelector('.resource-nav.next');
+    const items = Array.from(section.querySelectorAll('.resource-item'));
+
+    if(!track || !viewport || items.length === 0) return;
+
+    let idx = 0;
+
+    function clampIndex(i){
+      const n = items.length;
+      return (i % n + n) % n;
+    }
+
+    function layout(){
+      // Compute current item width + gap so the active tile centers,
+      // while neighbors remain visible at the edges.
+      const first = items[0];
+      const itemW = first.getBoundingClientRect().width;
+      const styles = getComputedStyle(track);
+      const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+
+      const vpW = viewport.getBoundingClientRect().width;
+      const centerOffset = (vpW - itemW) / 2;
+
+      const x = centerOffset - idx * (itemW + gap);
+      track.style.transform = `translateX(${x}px)`;
+    }
+
+    function go(delta){
+      idx = clampIndex(idx + delta);
+      layout();
+    }
+
+    prevBtn?.addEventListener('click', () => go(-1));
+    nextBtn?.addEventListener('click', () => go(1));
+
+    // Keyboard support when focused inside section
+    section.addEventListener('keydown', (e) => {
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); go(-1); }
+      if(e.key === 'ArrowRight'){ e.preventDefault(); go(1); }
+    });
+
+    // Drag / swipe support (lightweight)
+    let down = false, startX = 0, lastX = 0;
+    viewport.addEventListener('pointerdown', (e) => {
+      down = true;
+      startX = e.clientX;
+      lastX = startX;
+      viewport.setPointerCapture?.(e.pointerId);
+    });
+    viewport.addEventListener('pointermove', (e) => {
+      if(!down) return;
+      lastX = e.clientX;
+    });
+    function endDrag(){
+      if(!down) return;
+      down = false;
+      const dx = lastX - startX;
+      if(Math.abs(dx) > 42){
+        go(dx > 0 ? -1 : 1);
+      }
+    }
+    viewport.addEventListener('pointerup', endDrag);
+    viewport.addEventListener('pointercancel', endDrag);
+    viewport.addEventListener('pointerleave', endDrag);
+
+    // Re-layout on resize
+    window.addEventListener('resize', () => layout(), {passive:true});
+
+    // Initial position
+    requestAnimationFrame(layout);
+  })();
+</script>
+
+
+<script>
+document.addEventListener("scroll", function(){
+
+  const section = document.querySelector("#tools");
+  if(!section) return;
+
+  const rect = section.getBoundingClientRect();
+
+  if(rect.top < window.innerHeight - 100){
+      section.classList.add("reveal-active");
+  }
+
+});
+</script>
+
+
+<script>
+
+function revealOnScroll(){
+
+  const items = document.querySelectorAll(".reveal-item");
+
+  items.forEach(el => {
+
+    const rect = el.getBoundingClientRect();
+
+    if(rect.top < window.innerHeight - 80){
+        el.classList.add("active");
+    }
+
+  });
+
+}
+
+window.addEventListener("scroll", revealOnScroll);
+window.addEventListener("load", revealOnScroll);
+
+</script>
+
+</body>
+</html>
