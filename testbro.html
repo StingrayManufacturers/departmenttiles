@@ -1,0 +1,2873 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SharePoint Intranet – PS5 UI</title>
+  <!-- DEPT_PRELOAD_LINKS -->
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/it-hover.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/executive1.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/admin.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/service.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/planning.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/art.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/shipping.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/e-com.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/admin-hover.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/shipping-hover.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/quality.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/warehouse.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/training.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/training-hover.webp" />
+  <link rel="preload" as="image" href="https://stingraymanufacturers.github.io/departmenttiles/e-com-hover.webp" />
+
+  <style>
+    :root{
+      --bg:#0b0e14;
+      --text:#e9eef7;
+
+      --tile: 112px;
+      --tileBig: 178px;
+      --gap: 20px;
+
+      --safeTop: 34px;
+      --safeX: clamp(18px, 3.2vw, 48px);
+      --popOffset: 28px;
+
+      /* ✅ blur glass */
+      --glassA: rgba(255,255,255,.10);
+      --glassB: rgba(255,255,255,.06);
+      --glassBorder: rgba(255,255,255,.22);
+      --glassBorderOn: rgba(255,255,255,.42);
+      --glassGlow: rgba(255,255,255,.18);
+
+      /* ✅ fades */
+      --fadeDur: 520ms;
+      --fadeEase: cubic-bezier(.2,.8,.2,1);
+
+      /* ✅ for canvas dots */
+      --dotsBase: 0.010;   /* always faintly visible */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+/* ✅ cross-fade background layers (smooth section transitions) */
+.bg-layer{
+  position:fixed; inset:0;
+  z-index:-4;
+  background:#000 center/cover no-repeat;
+  opacity:0;
+  transition: opacity .85s cubic-bezier(.2,.8,.2,1);
+  filter: saturate(1.05) contrast(1.05) blur(2px);
+  transform: scale(1.03);
+  will-change: opacity, background-image, transform;
+  animation: bgDrift 22s ease-in-out infinite alternate;
+}
+.bg-layer.active{ opacity:.98; }
+
+/* slow ambient movement like macOS/Vision wallpapers */
+@keyframes bgDrift{
+  0%   { transform: translate3d(-0.6%, -0.4%, 0) scale(1.035); }
+  50%  { transform: translate3d( 0.4%, -0.2%, 0) scale(1.05); }
+  100% { transform: translate3d( 0.6%,  0.4%, 0) scale(1.04); }
+}
+
+/* ✅ dark overlay (keeps text readable) */
+.bg{
+  position:fixed; inset:0;
+  z-index:-3;
+  background: rgba(0,0,0,.38);
+}
+
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background: var(--bg);
+      overflow:hidden;
+    }
+
+    
+    
+    
+
+    .vignette{
+      position:fixed; inset:0; z-index:-1; pointer-events:none;
+      background: radial-gradient(circle at 55% 35%,
+        rgba(0,0,0,.0) 0,
+        rgba(0,0,0,.30) 58%,
+        rgba(0,0,0,.78) 100%);
+    }
+
+    .shell{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: var(--safeTop) var(--safeX) 18px;
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 16px;
+      user-select:none;
+      flex: 0 0 auto;
+    }
+    .topbar-left{display:flex;align-items:baseline;gap:18px;letter-spacing:.2px;}
+    .topbar-left .tab{font-size:26px;font-weight:750;opacity:.95;}
+    .topbar-right{display:flex;align-items:center;Hpx;opacity:.95;}
+    .time{font-size:20px;opacity:.75;letter-spacing:.3px;white-space:nowrap;}
+
+    .strip{
+      display:flex;
+      align-items:flex-end;
+      gap: var(--gap);
+      padding-top: 18px;
+      padding-bottom: 10px;
+      margin-top: 6px;
+      min-height: calc(var(--tileBig) + 30px);
+      overflow-x:auto;
+      overflow-y:hidden;
+      flex: 0 0 auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.20) rgba(0,0,0,0);
+    
+      width: fit-content;
+      position: relative;
+      left: 0;
+      transform: translateX(0);
+      transition: left 420ms cubic-bezier(.2,.8,.2,1), transform 420ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    /* ✅ On Home: center the main tiles above the welcome copy */
+    body.homeMode .strip{
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+/* ✅ GLASS TILE (top row) */
+    .tile{
+      position:relative;
+      width: var(--tile);
+      height: var(--tile);
+      border-radius: 26px;
+      border: 1px solid var(--glassBorder);
+      background: linear-gradient(180deg, var(--glassA), var(--glassB));
+      box-shadow:
+        0 18px 40px rgba(0,0,0,.30),
+        inset 0 1px 0 rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: width .18s ease, height .18s ease, transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+      flex: 0 0 auto;
+      outline:none;
+      color: inherit;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+
+      /* glass blur */
+      backdrop-filter: blur(16px) saturate(1.25);
+      -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    }
+    a.tile{ text-decoration:none; color:inherit; }
+
+    .tile:focus-visible{
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,.18),
+        0 18px 40px rgba(0,0,0,.30),
+        inset 0 1px 0 rgba(255,255,255,.12);
+      border-color: var(--glassBorderOn);
+    }
+    .tile svg{ width:48px; height:48px; opacity:.92 }
+
+    .tile .badge{
+      position:absolute; right:14px; top:14px;
+      width:10px; height:10px; border-radius:99px;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.20);
+      opacity:0;
+      transition: opacity .18s ease;
+    }
+    .tile.active{
+      width: var(--tileBig);
+      height: var(--tileBig);
+      border-color: var(--glassBorderOn);
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.07));
+      transform: translateY(-2px);
+      box-shadow:
+        0 22px 55px rgba(0,0,0,.35),
+        0 0 0 1px rgba(255,255,255,.06),
+        0 0 22px var(--glassGlow),
+        inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .tile.active .badge{ opacity:1; }
+
+    .tilewrap{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:0;}
+    .tile-label{
+      margin-top: 12px;
+      font-size: 20px;
+      font-weight: 650;
+      opacity:.92;
+      transform: translateY(6px);
+      transition: opacity .18s ease, transform .18s ease;
+      white-space: nowrap;
+      overflow: visible;
+      padding: 0 8px;
+      text-align:center;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+    .tilewrap.active .tile-label{opacity:.96;transform: translateY(0);}
+
+    .pop{
+      display:none;
+      margin-top: var(--popOffset);
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: visible;
+
+      /* smooth show/hide */
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 280ms var(--fadeEase), transform 280ms var(--fadeEase);
+    }
+    .pop.show{
+      display:flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .popBody{
+      flex: 1 1 auto;
+      min-height: 0;
+      display:flex;
+      gap: 14px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      overflow: hidden;
+      padding-top: 10px;
+    }
+
+    /* ✅ GLASS SUBTILES (popup tiles) */
+    .subtile{
+      width: 300px;
+      min-height: 128px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease, filter .12s ease, box-shadow .12s ease;
+      display:flex;
+      flex-direction:column;
+      padding: 16px;
+      outline:none;
+      text-decoration:none;
+      color: var(--text);
+      box-shadow: 0 18px 50px rgba(0,0,0,.30);
+      flex: 0 0 auto;
+
+      backdrop-filter: blur(16px) saturate(1.25);
+      -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    }
+    .subtile:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.34);
+      filter: brightness(1.05);
+      box-shadow: 0 22px 60px rgba(0,0,0,.38), 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .subtile:focus-visible{
+      box-shadow: 0 0 0 3px rgba(255,255,255,.14), 0 22px 60px rgba(0,0,0,.38);
+      border-color: rgba(255,255,255,.46);
+    }
+    .subtile .t{ font-weight: 800; font-size: 17px; letter-spacing:.2px; }
+    .subtile .d{ margin-top: 8px; color: rgba(233,238,247,.78); font-size: 13px; line-height: 1.35; }
+
+    /* ✅ GLASS PANEL (tasks placeholder) */
+    .glassPanel{
+      width: min(980px, 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow: 0 18px 50px rgba(0,0,0,.30);
+      padding: 14px;
+      flex: 1 1 auto;
+      min-height: 0;
+      display:flex;
+      flex-direction:column;
+
+      backdrop-filter: blur(18px) saturate(1.25);
+      -webkit-backdrop-filter: blur(18px) saturate(1.25);
+    }
+
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .shell{ overflow:visible; }
+      .pop{ overflow:visible; }
+      .popBody{ overflow:visible; }
+      .subtile{ width: min(100%, 460px); }
+    }
+
+    
+  /* Tools tiles: simple fade-in (no wipe) */
+  .tileFadeOnly{
+    opacity:0;
+    transform:translateY(8px);
+    animation:tileFadeOnly .45s ease forwards;
+    will-change:opacity,transform,filter;
+  }
+  @keyframes tileFadeOnly{
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+      .bg-layer, .pop{ transition:none !important; }
+    }
+  
+    /* ✅ User greeting + avatar */
+    .userbox{display:flex;align-items:center;gap:12px;}
+    .avatar{
+      width:40px;height:40px;border-radius:999px;
+      border: 1px solid rgba(255,255,255,.26);
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+      box-shadow: 0 14px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:850;font-size:15px;letter-spacing:.6px;
+      backdrop-filter: blur(16px) saturate(1.25);
+      -webkit-backdrop-filter: blur(16px) saturate(1.25);
+      user-select:none;
+    }
+    #welcomeUser{display:flex;align-items:center;gap:6px;}
+    #username{opacity:.98;}
+    .editName{
+      opacity:0;
+      margin-left:2px;
+      font-size:16px;
+      cursor:pointer;
+      transform: translateY(1px) scale(.98);
+      transition: opacity .18s ease, transform .18s ease, filter .18s ease;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
+    }
+    .userbox:hover .editName{
+      opacity:.65;
+      transform: translateY(1px) scale(1);
+    }
+    .userbox .editName:hover{
+      opacity:.95;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+    }
+
+  
+    /* ✅ Welcome overlay (first login) */
+    .welcomeOverlay{
+      position:fixed; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 24px;
+      z-index: 50;
+      background: radial-gradient(circle at 50% 35%,
+        rgba(255,255,255,.06) 0%,
+        rgba(0,0,0,.58) 55%,
+        rgba(0,0,0,.82) 100%);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 520ms var(--fadeEase);
+    }
+    .welcomeOverlay.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .welcomeCard{
+      width: min(560px, 100%);
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      box-shadow: 0 30px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.10);
+      padding: 22px 22px 18px;
+      backdrop-filter: blur(18px) saturate(1.25);
+      -webkit-backdrop-filter: blur(18px) saturate(1.25);
+      transform: translateY(10px) scale(.985);
+      transition: transform 520ms var(--fadeEase);
+    }
+    .welcomeOverlay.show .welcomeCard{ transform: translateY(0) scale(1); }
+    .welcomeTitle{
+      font-size: 34px;
+      font-weight: 860;
+      letter-spacing: .2px;
+      margin-bottom: 6px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.45);
+    }
+    .welcomeSub{
+      color: rgba(233,238,247,.78);
+      font-size: 14px;
+      line-height: 1.35;
+      margin-bottom: 16px;
+    }
+    .welcomeForm{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+    }
+    .welcomeInput{
+      flex: 1 1 auto;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding: 0 14px;
+      font-size: 15px;
+      outline:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .welcomeInput:focus{
+      border-color: rgba(255,255,255,.42);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.14), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .welcomeBtn{
+      height: 44px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+      color: var(--text);
+      font-weight: 780;
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(14px) saturate(1.25);
+      -webkit-backdrop-filter: blur(14px) saturate(1.25);
+    }
+    .welcomeBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); border-color: rgba(255,255,255,.38); }
+    .welcomeBtn:active{ transform: translateY(0); filter: brightness(.98); }
+    .welcomeHint{
+      margin-top: 12px;
+      font-size: 12px;
+      color: rgba(233,238,247,.62);
+    }
+
+    /* Blur/soften the page behind overlay */
+    body.hasWelcome .shell{
+      filter: blur(10px) saturate(1.05);
+      transform: scale(1.01);
+      transition: filter 520ms var(--fadeEase), transform 520ms var(--fadeEase);
+    }
+
+  
+    /* ✅ Departments grid (15 tiles, 5 per row, 16:9) */
+    
+    .popBody.grid5{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;               /* still tight but roomier */
+      align-items: stretch;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-top: 10px;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .popBody.grid5 .subtile{
+      transform-origin: center;
+      will-change: transform;
+
+      width: 100%;
+      min-height: 0;
+      aspect-ratio: 16 / 9;
+      border-radius: 24px;     /* rounder */
+      padding: 16px;
+      /* bigger tiles via container width + slightly larger pop area */
+      box-shadow: 0 18px 48px rgba(0,0,0,.32);
+      border-color: rgba(255,255,255,.20);
+      transition: transform .14s ease, border-color .14s ease, filter .14s ease, box-shadow .14s ease;
+    }
+    /* Headings only now, but keep these harmless */
+    .popBody.grid5 .subtile .t{ font-size: 16px; }
+    .popBody.grid5 .subtile .d{ display:none; }
+
+    @media (max-width: 1200px){
+      .popBody.grid5{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 980px){
+      .popBody.grid5{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .popBody.grid5 .subtile{ aspect-ratio: 16 / 10; }
+    }
+
+    /* ✅ Responsive grid for Company Resources + Tools (auto-fit to container) */
+    .popBody.autoGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      align-items: stretch;
+
+      /* allow hover pop-out without clipping */
+      overflow: visible;
+      padding-top: 18px;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .popBody.autoGrid .subtile{
+      width: 100%;
+      min-height: 0;
+      aspect-ratio: 16 / 9;
+      border-radius: 24px;
+      padding: 16px;
+      margin: 0; /* override toolCircle margin if present */
+    }
+    @media (max-width: 520px){
+      .popBody.autoGrid{ grid-template-columns: 1fr; }
+      .popBody.autoGrid .subtile{ aspect-ratio: 16 / 10; }
+    }
+
+  
+    /* ✅ Department image tiles (headings only) */
+    
+.deptTile{
+      background-size: cover;
+      background-position: top center;
+      position: relative;
+      overflow: hidden;
+    
+      background-color: rgba(255,255,255,.03);
+    }
+    .deptTile::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: transparent;
+      pointer-events:none;
+    }
+    .deptTitle{
+      position:absolute;
+      left:16px;
+      right:16px;
+      bottom:14px;
+      font-size:18px;
+      font-weight:850;
+      letter-spacing:.2px;
+      text-shadow: 0 3px 10px rgba(0,0,0,.95);
+      z-index:2;
+    }
+
+  
+    .deptTile .d{display:none;}
+  
+    
+
+  
+    /* ✅ Hide scrollbars (prevents left sidebar/scrollbar flash) */
+    .strip::-webkit-scrollbar,
+    #popBody::-webkit-scrollbar{ width:0; height:0; }
+    .strip, #popBody{ scrollbar-width: none; -ms-overflow-style: none; }
+
+    /* Grid shouldn't scroll; keep content fitting the screen */
+    .popBody.grid5{ overflow: hidden; }
+
+  
+    /* ✅ Theme button + menu */
+    .themeBtn{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      color: var(--text);
+      font-weight: 780;
+      letter-spacing:.2px;
+      cursor:pointer;
+      box-shadow: 0 14px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.10);
+      backdrop-filter: blur(14px) saturate(1.25);
+      -webkit-backdrop-filter: blur(14px) saturate(1.25);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .themeBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); border-color: rgba(255,255,255,.40); }
+    .themeBtn:active{ transform: translateY(0); filter: brightness(.98); }
+
+    .themeMenu{
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 160px;
+      padding: 10px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      box-shadow: 0 22px 70px rgba(0,0,0,.42);
+      backdrop-filter: blur(18px) saturate(1.25);
+      -webkit-backdrop-filter: blur(18px) saturate(1.25);
+      display:none;
+      z-index: 60;
+    }
+    .topbar-right{ position: relative; }
+    .themeMenu.open{ display:block; animation: themePop 180ms var(--fadeEase); }
+    @keyframes themePop{ from{ opacity:0; transform: translateY(-6px) scale(.98);} to{ opacity:1; transform: translateY(0) scale(1);} }
+
+    .themeItem{
+      width:100%;
+      text-align:left;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 700;
+      margin: 6px 0;
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+    .themeItem:hover{ transform: translateY(-1px); filter: brightness(1.10); border-color: rgba(255,255,255,.34); }
+    .themeItem:active{ transform: translateY(0); filter: brightness(.98); }
+
+    /* ✅ Theme presets */
+    /* ✅ Theme presets (tiles only — text stays white) */
+    :root[data-theme="white"]{
+      --glassA: rgba(255,255,255,.26);
+      --glassB: rgba(255,255,255,.10);
+      --glassBorder: rgba(255,255,255,.30);
+      --glassBorderOn: rgba(255,255,255,.55);
+      --glassGlow: rgba(255,255,255,.22);
+    }
+    :root[data-theme="grey"]{
+      --glassA: rgba(255,255,255,.16);
+      --glassB: rgba(255,255,255,.06);
+      --glassBorder: rgba(255,255,255,.22);
+      --glassBorderOn: rgba(255,255,255,.44);
+      --glassGlow: rgba(255,255,255,.18);
+    }
+    :root[data-theme="black"]{
+      --glassA: rgba(255,255,255,.10);
+      --glassB: rgba(255,255,255,.05);
+      --glassBorder: rgba(255,255,255,.20);
+      --glassBorderOn: rgba(255,255,255,.40);
+      --glassGlow: rgba(255,255,255,.16);
+    }
+    :root[data-theme="blue"]{
+      --glassA: rgba(80,150,255,.20);
+      --glassB: rgba(80,150,255,.08);
+      --glassBorder: rgba(120,180,255,.28);
+      --glassBorderOn: rgba(170,210,255,.52);
+      --glassGlow: rgba(120,180,255,.22);
+    }
+    :root[data-theme="red"]{
+      --glassA: rgba(255,90,110,.18);
+      --glassB: rgba(255,90,110,.07);
+      --glassBorder: rgba(255,140,155,.26);
+      --glassBorderOn: rgba(255,185,195,.50);
+      --glassGlow: rgba(255,120,135,.22);
+    }
+    :root[data-theme="purple"]{
+      --glassA: rgba(170,110,255,.20);
+      --glassB: rgba(170,110,255,.08);
+      --glassBorder: rgba(200,160,255,.28);
+      --glassBorderOn: rgba(225,205,255,.52);
+      --glassGlow: rgba(200,160,255,.22);
+    }
+    :root[data-theme="green"]{
+      --glassA: rgba(90,255,180,.18);
+      --glassB: rgba(90,255,180,.07);
+      --glassBorder: rgba(140,255,205,.26);
+      --glassBorderOn: rgba(190,255,230,.50);
+      --glassGlow: rgba(140,255,205,.22);
+    }
+    :root[data-theme="yellow"]{
+      --glassA: rgba(255,215,90,.20);
+      --glassB: rgba(255,215,90,.08);
+      --glassBorder: rgba(255,235,170,.28);
+      --glassBorderOn: rgba(255,245,210,.52);
+      --glassGlow: rgba(255,235,170,.22);
+    }
+/* ✅ Dept tile image (fast decode via <img>) */
+    .deptTile{ position: relative; }
+    .deptImg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: inherit;
+      transform: scale(1.01);
+      will-change: transform;
+      z-index: 1;
+    }
+
+    
+
+/* Department tiles: only image zoom on hover, tile stays still */
+.popBody.grid5 .deptTile{
+  transform: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease, filter .18s ease !important;
+}
+.popBody.grid5 .deptTile:hover{
+  transform: none !important;
+  border-color: rgba(255,255,255,.45) !important;
+  filter: none !important;
+  box-shadow:
+    0 20px 55px rgba(0,0,0,.45),
+    0 0 16px rgba(255,255,255,.18) !important;
+}
+.popBody.grid5 .deptTile:focus-visible{
+  transform: none !important;
+  border-color: rgba(255,255,255,.45) !important;
+  filter: none !important;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.14),
+    0 20px 55px rgba(0,0,0,.45),
+    0 0 16px rgba(255,255,255,.18) !important;
+}
+.popBody.grid5 .deptTile .deptImg{
+  transition: transform 600ms cubic-bezier(.2,.8,.2,1), filter 600ms cubic-bezier(.2,.8,.2,1) !important;
+}
+.popBody.grid5 .deptTile:hover .deptImg,
+.popBody.grid5 .deptTile:focus-visible .deptImg{
+  transform: scale(1.11) !important;
+  filter: saturate(1.10) contrast(1.04) brightness(1.02) !important;
+}
+
+/* ✨ Premium Company Resources hover (glass glow + gentle zoom) */
+    .resources .deptTile{
+      transform: translateY(0) scale(1);
+      transition: transform 220ms var(--fadeEase), box-shadow 220ms var(--fadeEase), border-color 220ms var(--fadeEase), filter 220ms var(--fadeEase);
+    }
+    .resources .deptTile::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius: inherit;
+      background:
+        radial-gradient(120% 120% at 20% 20%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
+        radial-gradient(120% 120% at 80% 0%, rgba(150,200,255,.14), rgba(255,255,255,0) 60%);
+      opacity:0;
+      pointer-events:none;
+      z-index:0;
+      transition: opacity 220ms var(--fadeEase);
+      }
+    .resources .deptTile:hover::before{ opacity:1; }
+
+    .resources .deptTile .deptImg{
+      transition: transform 600ms cubic-bezier(.2,.8,.2,1), filter 600ms cubic-bezier(.2,.8,.2,1);
+    }
+    .resources .deptTile:hover .deptImg{
+      transform: scale(1.11);
+      filter: saturate(1.10) contrast(1.04) brightness(1.02);
+    }
+
+    .resources .deptTile:hover{
+      transform: translateY(-7px) scale(1.035);
+      border-color: rgba(255,255,255,.55);
+      box-shadow:
+        0 34px 90px rgba(0,0,0,.58),
+        0 0 0 1px rgba(255,255,255,.10),
+        0 0 28px rgba(255,255,255,.16);
+    }
+
+    .deptTitle{ z-index: 2; }
+    /* Remove any overlay hues */
+    .deptTile::after{ display:none !important; }
+
+  
+    /* ✅ Global text shadow (text stays white on every theme) */
+    body{ color: var(--text); }
+    .tab, .tile-label, .deptTitle, .subtile .t, .themeBtn, .themeItem{
+      text-shadow: 0 3px 10px rgba(0,0,0,.95);
+    }
+  
+    /* ✅ Theme hue overlay */
+    .themeHue{
+      position:fixed; inset:0;
+      z-index:-2;            /* above bgImage (-3) and above bg (-4), below dots (-2?) */
+      pointer-events:none;
+      background: var(--themeHue, rgba(0,0,0,0));
+      mix-blend-mode: color;
+      opacity: var(--themeHueOpacity, .35);
+      transition: opacity 240ms var(--fadeEase), background 240ms var(--fadeEase);
+    }
+
+    /* ✅ Theme menu as swatch row */
+    .themeMenu{
+      display:none;
+      position:absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      box-shadow: 0 22px 70px rgba(0,0,0,.42);
+      backdrop-filter: blur(18px) saturate(1.25);
+      -webkit-backdrop-filter: blur(18px) saturate(1.25);
+      z-index: 60;
+
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap: nowrap;
+    }
+    .themeMenu.open{ display:flex; animation: themePop 180ms var(--fadeEase); }
+
+    .themeSwatch{
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.35);
+      cursor:pointer;
+      padding:0;
+      outline:none;
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+    .themeSwatch:hover{ transform: translateY(-1px) scale(1.06); filter: brightness(1.10); border-color: rgba(255,255,255,.70); }
+    .themeSwatch:active{ transform: translateY(0) scale(1.02); filter: brightness(.98); }
+
+    /* Swatch colors */
+    .themeSwatch[data-theme="white"]{ background:#ffffff; }
+    .themeSwatch[data-theme="grey"]{ background:#aeb6c2; }
+    .themeSwatch[data-theme="black"]{ background:#0b0e14; }
+    .themeSwatch[data-theme="blue"]{ background:#2b7cff; }
+    .themeSwatch[data-theme="red"]{ background:#ff3b5c; }
+    .themeSwatch[data-theme="purple"]{ background:#8b5cff; }
+    .themeSwatch[data-theme="green"]{ background:#20e3a2; }
+    .themeSwatch[data-theme="yellow"]{ background:#ffd24a; }
+
+    /* ✅ Stronger tile colors per theme + hue overlay vars */
+    :root[data-theme="white"]{
+      --themeHue: rgba(255,255,255,.55);
+      --themeHueOpacity: .20;
+      --glassA: rgba(255,255,255,.34);
+      --glassB: rgba(255,255,255,.14);
+      --glassBorder: rgba(255,255,255,.40);
+      --glassBorderOn: rgba(255,255,255,.78);
+      --glassGlow: rgba(255,255,255,.28);
+    }
+    :root[data-theme="grey"]{
+      --themeHue: rgba(200,210,225,.55);
+      --themeHueOpacity: .28;
+      --glassA: rgba(255,255,255,.22);
+      --glassB: rgba(255,255,255,.09);
+      --glassBorder: rgba(255,255,255,.30);
+      --glassBorderOn: rgba(255,255,255,.62);
+      --glassGlow: rgba(255,255,255,.22);
+    }
+    :root[data-theme="black"]{
+      --themeHue: rgba(0,0,0,.0);
+      --themeHueOpacity: .00;
+      --glassA: rgba(255,255,255,.12);
+      --glassB: rgba(255,255,255,.06);
+      --glassBorder: rgba(255,255,255,.22);
+      --glassBorderOn: rgba(255,255,255,.50);
+      --glassGlow: rgba(255,255,255,.18);
+    }
+    :root[data-theme="blue"]{
+      --themeHue: rgba(50,140,255,.75);
+      --themeHueOpacity: .33;
+      --glassA: rgba(45,140,255,.30);
+      --glassB: rgba(45,140,255,.12);
+      --glassBorder: rgba(120,190,255,.40);
+      --glassBorderOn: rgba(190,230,255,.78);
+      --glassGlow: rgba(120,190,255,.30);
+    }
+    :root[data-theme="red"]{
+      --themeHue: rgba(255,70,100,.75);
+      --themeHueOpacity: .32;
+      --glassA: rgba(255,70,100,.28);
+      --glassB: rgba(255,70,100,.11);
+      --glassBorder: rgba(255,170,185,.36);
+      --glassBorderOn: rgba(255,220,228,.72);
+      --glassGlow: rgba(255,130,150,.30);
+    }
+    :root[data-theme="purple"]{
+      --themeHue: rgba(140,90,255,.78);
+      --themeHueOpacity: .33;
+      --glassA: rgba(140,90,255,.30);
+      --glassB: rgba(140,90,255,.12);
+      --glassBorder: rgba(205,175,255,.38);
+      --glassBorderOn: rgba(235,220,255,.76);
+      --glassGlow: rgba(205,175,255,.30);
+    }
+    :root[data-theme="green"]{
+      --themeHue: rgba(40,230,170,.75);
+      --themeHueOpacity: .30;
+      --glassA: rgba(40,230,170,.26);
+      --glassB: rgba(40,230,170,.10);
+      --glassBorder: rgba(170,255,225,.34);
+      --glassBorderOn: rgba(220,255,240,.70);
+      --glassGlow: rgba(140,255,210,.28);
+    }
+    :root[data-theme="yellow"]{
+      --themeHue: rgba(255,210,70,.78);
+      --themeHueOpacity: .30;
+      --glassA: rgba(255,210,70,.26);
+      --glassB: rgba(255,210,70,.10);
+      --glassBorder: rgba(255,240,190,.34);
+      --glassBorderOn: rgba(255,250,224,.70);
+      --glassGlow: rgba(255,235,170,.28);
+    }
+
+  
+    /* ✅ Department submenu overlay */
+    body.subOpen .shell{ filter: blur(10px) saturate(1.06); transform: scale(1.01); transition: filter 220ms var(--fadeEase), transform 220ms var(--fadeEase); }
+    .subOverlay{
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 80;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(0,0,0,.40);
+      backdrop-filter: blur(12px) saturate(1.15);
+      -webkit-backdrop-filter: blur(12px) saturate(1.15);
+      transition: opacity 220ms var(--fadeEase);
+    }
+    .subOverlay.show{ opacity: 1; pointer-events: auto; }
+    .subCard{
+      width: min(720px, 92vw);
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      box-shadow: 0 40px 120px rgba(0,0,0,.55);
+      padding: 18px;
+      transform: translateY(10px) scale(.985);
+      transition: transform 220ms var(--fadeEase);
+    }
+    .subOverlay.show .subCard{ transform: translateY(0) scale(1); }
+    .subTop{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 14px; }
+    .subTitle{ font-weight: 860; font-size: 20px; text-shadow: 0 3px 10px rgba(0,0,0,.95); }
+    .subClose{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      cursor:pointer;
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+    .subClose:hover{ transform: translateY(-1px); filter: brightness(1.06); border-color: rgba(255,255,255,.38); }
+    .subClose:active{ transform: translateY(0); filter: brightness(.98); }
+
+    .subGrid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 820px){ .subGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .subTile{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      aspect-ratio: 16/9;
+      border-radius: 22px;
+      border: 1px solid var(--glassBorder);
+      background: linear-gradient(180deg, var(--glassA), var(--glassB));
+      box-shadow: 0 18px 48px rgba(0,0,0,.32);
+      color: var(--text);
+      font-weight: 850;
+      letter-spacing:.2px;
+      text-decoration:none;
+      text-shadow: 0 3px 10px rgba(0,0,0,.95);
+      transition: transform .14s ease, filter .14s ease, border-color .14s ease, box-shadow .14s ease;
+    }
+    .subTile:hover{
+      transform: translateY(-8px) scale(1.04);
+      border-color: var(--glassBorderOn);
+      filter: brightness(1.10) saturate(1.10);
+      box-shadow:
+        0 30px 80px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.10),
+        0 0 26px rgba(255,255,255,.14);
+    }
+
+/* Tools: full circle tiles (no square cards) */
+.popBody.toolsArea .subtile.toolCircle{
+  width: clamp(94px, 12vw, 148px);
+  height: clamp(94px, 12vw, 148px);
+  aspect-ratio: 1 / 1;
+  border-radius: 999px;
+  margin: 0;
+
+  /* override subtile card layout */
+  padding: 0;
+  min-height: 0;
+  justify-content: center;
+  align-items: center;
+  overflow: visible; /* label sits below */
+
+  /* icon appearance */
+  background-size: contain; /* ✅ prevents giant cropped circles */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(255,255,255,.03);
+
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 14px 38px rgba(0,0,0,.35);
+  position: relative;
+}
+.popBody.toolsArea .subtile.toolCircle::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.12), rgba(255,255,255,0) 55%),
+              linear-gradient(to bottom, rgba(0,0,0,.05), rgba(0,0,0,.18));
+  pointer-events:none;
+}
+.popBody.toolsArea .subtile.toolCircle:hover{
+  transform: translateY(-2px);
+}
+.popBody.toolsArea .toolLabel{
+  position:absolute;
+  left:50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  width: 190px;
+  text-align:center;
+  font-size: 13px;
+  font-weight: 720;
+  color: rgba(245,248,255,.92);
+  text-shadow: 0 8px 22px rgba(0,0,0,.6);
+  pointer-events:none;
+}
+
+
+
+
+/* Tools layout: keep circles closer together and centered (don’t stretch 5 equal columns) */
+.popBody.toolsArea.grid5{
+  grid-template-columns: repeat(auto-fit, minmax(120px, 150px));
+  justify-content: center;
+  gap: clamp(16px, 3.2vw, 34px);
+  overflow: visible; /* avoid clipping on hover */
+  padding-top: 18px;
+}
+/* Teams overlay mini tools */
+.teams-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.22);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+  z-index: 60;
+}
+.teams-overlay.is-open{
+  opacity: 1;
+  pointer-events: auto;
+}
+.teams-fab-wrap{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+}
+.teams-fab-rail{
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: rgba(10,12,18,.72);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 18px 55px rgba(0,0,0,.45);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.teams-fab{
+  height: 44px;
+  width: auto;
+  min-width: 128px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  text-decoration: none;
+  color: rgba(245,248,255,.95);
+  font-weight: 650;
+  font-size: 13px;
+  letter-spacing: .2px;
+  line-height: 1;
+  transition: transform .14s ease, background .14s ease, border-color .14s ease;
+}
+.teams-fab:hover{
+  background: rgba(255,255,255,.10);
+  transform: translateY(-1px);
+}
+.teams-fab-ico{
+  font-size: 16px;
+  line-height: 1;
+}
+.teams-fab-label{
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+.teams-fab-close{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: rgba(245,248,255,.95);
+  cursor: pointer;
+}
+.teams-fab-close:hover{
+  background: rgba(255,255,255,.10);
+}
+
+
+
+  /* HOME INTRO (free, responsive, corporate) */
+  .homeIntro{max-width:min(1100px,92vw);margin:10px auto 0;padding:10px 6px 4px;font-family:"Segoe UI",Inter,system-ui,-apple-system,Arial,sans-serif;}
+  .homeIntro .headline{font-weight:800;font-size:clamp(28px,3.2vw,44px);letter-spacing:.2px;line-height:1.08;margin:0 0 10px;color:rgba(245,248,255,.98);text-shadow:0 10px 24px rgba(0,0,0,.45);}
+  .homeIntro .subcopy{font-size:clamp(14px,1.35vw,18px);color:rgba(233,238,247,.88);line-height:1.55;max-width:980px;text-shadow:0 10px 24px rgba(0,0,0,.35);}
+  .homeIntro .guideGrid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;align-items:stretch;}
+  .homeIntro .guideCard{border-radius:18px;padding:14px 14px 12px;background:rgba(10,14,22,.40);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 40px rgba(0,0,0,.35);}
+  .homeIntro .guideCard .t{font-weight:800;letter-spacing:.2px;font-size:clamp(15px,1.4vw,18px);margin-bottom:6px;color:rgba(245,248,255,.98);}
+  .homeIntro .guideCard .d{font-size:clamp(13px,1.15vw,15px);line-height:1.5;color:rgba(233,238,247,.86);}
+
+  /* Letter-by-letter fade */
+  .charFade{display:inline-block;opacity:0;transform:translateY(6px);animation:charIn .45s ease forwards;white-space:pre;}
+  @keyframes charIn{to{opacity:1;transform:translateY(0);}}
+/* tile fade (card-level) to match the intro vibe */
+  .tileFade{opacity:0;transform:translateY(10px) scale(.985);animation:tileIn .55s ease forwards;}
+  @keyframes tileIn{to{opacity:1;transform:translateY(0) scale(1);}}
+  /* ensure label spans don't break layout */
+  .deptTitle .charFade, .toolLabel .charFade{white-space:pre;}
+}
+
+  /* Tile reveal: left-to-right wipe + fade (for all sections) */
+  .tileWipe{
+    opacity:0;
+    transform:translateY(10px);
+    clip-path:inset(0 100% 0 0);
+    animation:tileWipe .72s cubic-bezier(.2,.8,.2,1) forwards;
+    will-change:opacity,transform,clip-path,filter;
+  }
+  @keyframes tileWipe{
+    0%{opacity:0;transform:translateY(10px);clip-path:inset(0 100% 0 0);}
+    60%{opacity:1;}
+    100%{opacity:1;transform:translateY(0);clip-path:inset(0 0 0 0);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tileWipe{animation:none !important;opacity:1 !important;transform:none !important;filter:none !important;clip-path:none !important;}
+  }
+
+
+.socialIcons{display:flex;justify-content:center;gap:22px;margin-top:20px}
+
+.socialBtn{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:999px;
+  background:rgba(12,16,24,.32);border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 28px rgba(0,0,0,.35);transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.socialBtn:hover{transform:translateY(-2px) scale(1.02);border-color:rgba(255,255,255,.22);
+  box-shadow:0 0 0 1px rgba(255,255,255,.16), 0 18px 40px rgba(0,0,0,.42), 0 0 18px rgba(255,255,255,.22);
+}
+.socialBtn img{width:42px;height:42px;opacity:.9;transition:all .25s ease;filter:drop-shadow(0 0 0 rgba(255,255,255,0))}
+.socialBtn img:hover{transform:scale(1.15);opacity:1;filter:drop-shadow(0 0 10px rgba(255,255,255,.6))}
+.homeIntro .headline{font-size:clamp(32px,4vw,56px);font-weight:700}
+
+
+/* ✅ Top center navigation (text) + animated underline */
+.topNavCenter{
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 26px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(10,12,18,.35);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 18px 55px rgba(0,0,0,.42);
+}
+
+/* Nav position: centered on Home, slides left on other sections */
+.topNavCenter{
+  transition: left .45s ease, transform .45s ease, opacity .2s ease;
+}
+body:not(.homeMode) .topNavCenter{
+  left: 22px;
+  transform: translateX(0);
+}
+body.homeMode .topNavCenter{
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.topNavCenter .navBtn{
+  position: relative;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(245,248,255,.92);
+  font-family: "Segoe UI", Inter, system-ui, -apple-system, Arial, sans-serif;
+  font-weight: 780;
+  font-size: 14px;
+  letter-spacing: .2px;
+  padding: 10px 8px;
+  cursor: pointer;
+  text-shadow: 0 3px 10px rgba(0,0,0,.85);
+}
+
+.topNavCenter .navBtn:hover{ color: rgba(255,255,255,.98); }
+
+.topNavCenter .navIndicator{
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  height: 3px;
+  width: 40px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 10px 24px rgba(0,0,0,.35), 0 0 18px rgba(255,255,255,.20);
+  transform: translateX(0);
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1), width 260ms cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+
+@media (max-width: 720px){
+  .topNavCenter{ gap: 16px; padding: 8px 10px; top: 14px; }
+  .topNavCenter .navBtn{ font-size: 13px; padding: 9px 6px; }
+}
+
+
+    /* Hide underline menu (use square tiles as primary nav) */
+    .topNavCenter{display:none !important;}
+
+  
+    /* ===== Mini scroll nav (appears when main tiles are off-screen) ===== */
+    .scrollNav{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -90px; /* hidden */
+      display: flex;
+      gap: 26px;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 22px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.42);
+      -webkit-border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 18px 55px rgba(0,0,0,0.45);
+      z-index: 2000;
+      transition: top 380ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease;
+      opacity: 0;
+    }
+    .scrollNav.show{
+      top: 16px;
+      opacity: 1;
+    }
+    .scrollNavBtn{
+      position: relative;
+      background: transparent;
+      border: 0;
+      color: rgba(255,255,255,0.90);
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: .2px;
+      padding: 8px 10px;
+      cursor: pointer;
+      opacity: .88;
+      transition: opacity 180ms ease, transform 180ms ease;
+      white-space: nowrap;
+    }
+    .scrollNavBtn:hover{ opacity: 1; transform: translateY(-1px); }
+    .scrollNavBtn.active{
+      opacity: 1;
+      color: rgba(255,255,255,0.98);
+      text-shadow: 0 0 18px rgba(255,255,255,0.22);
+    }
+    /* subtle glow behind active */
+    .scrollNavBtn.active::before{
+      content: "";
+      position: absolute;
+      inset: -6px -10px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18), rgba(255,255,255,0) 70%);
+      z-index: -1;
+    }
+    /* moving underline indicator */
+    .scrollNavIndicator{
+      position: absolute;
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.90);
+      bottom: 9px;
+      left: 0;
+      width: 0;
+      transform: translateX(0);
+      transition: transform 420ms cubic-bezier(.2,.8,.2,1), width 420ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease;
+      opacity: 0.9;
+    }
+
+  
+/* Smooth fade-in from the left for sub tiles */
+.subtile{
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: fadeInLeft 0.35s ease forwards;
+}
+
+@keyframes fadeInLeft{
+  to{
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+/* Social heading uses same fade as welcome */
+.socialHeading{
+  opacity:0;
+  transform:translateY(6px);
+  animation:charIn .45s ease forwards;
+}
+
+
+/* tighter tools spacing */
+.popBody.toolsArea.grid5{
+  grid-template-columns: repeat(auto-fit, minmax(110px, 130px));
+  justify-content: center;
+  gap: 14px;
+}
+
+/* subtle glow for company resources tiles */
+.resources .deptTile{
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.resources .deptTile:hover{
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(255,255,255,.45);
+  box-shadow:
+    0 20px 55px rgba(0,0,0,.45),
+    0 0 16px rgba(255,255,255,.18);
+}
+
+
+/* Top-right credit */
+.lukeCredit{
+  position:absolute;
+  right:0;
+  bottom:48px; /* sits directly above theme button */
+  font-size:11px;
+  letter-spacing:.25px;
+  text-transform:uppercase;
+  color:rgba(233,238,247,.65);
+  text-shadow:0 4px 14px rgba(0,0,0,.45);
+  white-space:nowrap;
+}
+
+
+/* Theme-matched welcome guide tiles */
+.homeIntro .guideCard{
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--glassA) 92%, rgba(255,255,255,.02)),
+      color-mix(in srgb, var(--glassB) 96%, rgba(255,255,255,.01)));
+  border: 1px solid color-mix(in srgb, var(--glassBorder) 100%, rgba(255,255,255,.08));
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 0 18px color-mix(in srgb, var(--glassGlow) 55%, transparent);
+  backdrop-filter: blur(10px) saturate(1.12);
+  -webkit-backdrop-filter: blur(10px) saturate(1.12);
+}
+
+.homeIntro .guideCard::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(120% 120% at 20% 12%,
+      color-mix(in srgb, var(--glassGlow) 70%, transparent),
+      transparent 60%);
+  opacity:.9;
+}
+
+.homeIntro .guideCard .t,
+.homeIntro .guideCard .d{
+  position: relative;
+  z-index: 1;
+}
+
+
+/* Tools layout tighter */
+.popBody.toolsArea.grid5{
+  grid-template-columns: repeat(auto-fit, minmax(100px, 120px));
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Space hover effect for tool circles */
+.popBody.toolsArea .subtile.toolCircle{
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.popBody.toolsArea .subtile.toolCircle:hover{
+  transform: scale(1.08);
+  border-color: rgba(255,255,255,.45);
+  box-shadow:
+    0 18px 50px rgba(0,0,0,.45),
+    0 0 18px rgba(255,255,255,.22);
+}
+
+
+/* ===== Fix tool-image flash when switching sections ===== */
+/* Tool-specific backgrounds should never bleed into non-tools tiles */
+.popBody:not(.toolsArea) .subtile.toolCircle,
+.popBody.autoGrid .subtile:not(.toolCircle),
+.popBody.grid5 .subtile:not(.toolCircle){
+  background-image: none !important;
+}
+
+/* Ensure company resource / department image tiles fully own their paint layer */
+.resources .deptTile,
+.popBody.grid5 .deptTile{
+  isolation: isolate;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+.resources .deptTile .deptImg,
+.popBody.grid5 .deptTile .deptImg{
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0) scale(1.01);
+}
+
+/* ===== Tools: tighter layout + magnetic/proximity hover ===== */
+.popBody.toolsArea.grid5{
+  grid-template-columns: repeat(auto-fit, minmax(96px, 116px)) !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+/* Make tools feel like floating icons in space */
+.popBody.toolsArea{
+  perspective: 1200px;
+}
+
+.popBody.toolsArea .subtile.toolCircle{
+  position: relative;
+  transform: translateZ(0) scale(var(--toolScale, 1)) !important;
+  transition:
+    transform 180ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 180ms cubic-bezier(.2,.8,.2,1),
+    border-color 180ms cubic-bezier(.2,.8,.2,1),
+    filter 180ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform, box-shadow, filter;
+}
+
+.popBody.toolsArea .subtile.toolCircle::before{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.16), rgba(255,255,255,0) 62%);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 180ms cubic-bezier(.2,.8,.2,1);
+}
+
+.popBody.toolsArea .subtile.toolCircle:hover{
+  transform: translateZ(0) scale(1.10) !important;
+  border-color: rgba(255,255,255,.48) !important;
+  box-shadow:
+    0 18px 50px rgba(0,0,0,.45),
+    0 0 22px rgba(255,255,255,.22) !important;
+  filter: brightness(1.03);
+}
+.popBody.toolsArea .subtile.toolCircle:hover::before{
+  opacity:1;
+}
+
+/* Nearby icons react slightly for premium magnetic feel */
+.popBody.toolsArea.is-magnetic .subtile.toolCircle.near{
+  transform: translateZ(0) scale(1.04) !important;
+  box-shadow:
+    0 14px 38px rgba(0,0,0,.38),
+    0 0 14px rgba(255,255,255,.14) !important;
+}
+
+.popBody.toolsArea.is-magnetic .subtile.toolCircle.far{
+  transform: translateZ(0) scale(.985) !important;
+  filter: saturate(.98) brightness(.98);
+}
+
+
+/* ===== Living background treatment ===== */
+.bg-layer{
+  overflow: hidden;
+}
+
+.bg-layer::before,
+.bg-layer::after{
+  content:"";
+  position:absolute;
+  inset:-6%;
+  pointer-events:none;
+  will-change: transform, opacity;
+}
+
+/* soft drifting light bloom */
+.bg-layer::before{
+  background:
+    radial-gradient(42% 36% at 18% 24%, rgba(255,255,255,.12), rgba(255,255,255,0) 62%),
+    radial-gradient(34% 28% at 82% 18%, rgba(255,255,255,.08), rgba(255,255,255,0) 64%),
+    radial-gradient(40% 34% at 56% 78%, rgba(255,255,255,.06), rgba(255,255,255,0) 66%);
+  mix-blend-mode: screen;
+  opacity: .42;
+  animation: bgBloomDrift 20s ease-in-out infinite alternate;
+}
+
+/* ultra-subtle film grain / atmosphere */
+.bg-layer::after{
+  inset: -2%;
+  opacity: .055;
+  background-image:
+    radial-gradient(rgba(255,255,255,.5) .6px, transparent .8px);
+  background-size: 10px 10px;
+  mix-blend-mode: soft-light;
+  animation: bgGrainShift 9s steps(8) infinite;
+}
+
+@keyframes bgBloomDrift{
+  0%   { transform: translate3d(-1.2%, -0.8%, 0) scale(1.02); opacity:.28; }
+  50%  { transform: translate3d( 1.0%, -1.1%, 0) scale(1.06); opacity:.40; }
+  100% { transform: translate3d( 0.6%,  1.0%, 0) scale(1.04); opacity:.34; }
+}
+
+@keyframes bgGrainShift{
+  0%   { transform: translate3d(0,0,0); }
+  25%  { transform: translate3d(-0.8%, 0.5%, 0); }
+  50%  { transform: translate3d(0.6%, -0.4%, 0); }
+  75%  { transform: translate3d(-0.4%, -0.6%, 0); }
+  100% { transform: translate3d(0.8%, 0.4%, 0); }
+}
+
+/* Slightly stronger cinematic drift on active section bg */
+.bg-layer.active{
+  opacity: .99;
+  filter: saturate(1.08) contrast(1.06) blur(1.8px);
+}
+
+/* cursor-driven parallax variables */
+.bg-layer{
+  transform:
+    translate3d(var(--bgmx, 0px), var(--bgmy, 0px), 0)
+    scale(1.035);
+}
+.bg-layer.active{
+  transform:
+    translate3d(var(--bgmx, 0px), var(--bgmy, 0px), 0)
+    scale(1.045);
+}
+
+
+
+
+
+
+  50%{ opacity: .95; }
+  100%{ opacity: 0; transform: rotate(45deg) translate(6px,6px); }
+}
+
+</style>
+</head>
+
+<body>
+
+
+
+
+
+</div>
+
+
+  <div class="bg" aria-hidden="true"></div>
+  <div id="bgLayer1" class="bg-layer active" aria-hidden="true"></div>
+  <div id="bgLayer2" class="bg-layer" aria-hidden="true"></div>
+
+  <div class="scrollNav" id="scrollNav" aria-label="Quick navigation">
+    <button type="button" class="scrollNavBtn" data-key="home">Home</button>
+    <button type="button" class="scrollNavBtn" data-key="departments">Departments</button>
+    <button type="button" class="scrollNavBtn" data-key="company">Company Resources</button>
+    <button type="button" class="scrollNavBtn" data-key="tools">Tools</button>
+    <div class="scrollNavIndicator" id="scrollNavIndicator" aria-hidden="true"></div>
+  </div>
+
+  <div class="themeHue" id="themeHue" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+  <!-- ✅ Top center navigation -->
+  <div class="topNavCenter" id="topNavCenter" aria-label="Main navigation">
+    <button class="navBtn" type="button" data-key="home">Home</button>
+    <button class="navBtn" type="button" data-key="departments">Departments</button>
+    <button class="navBtn" type="button" data-key="msadmin">Company Resources</button>
+    <button class="navBtn" type="button" data-key="tools">Tools</button>
+    <div class="navIndicator" id="navIndicator" aria-hidden="true"></div>
+  </div>
+
+
+  <!-- ✅ First-time Welcome Overlay -->
+  <div class="welcomeOverlay" id="welcomeOverlay" aria-hidden="true">
+    <div class="welcomeCard" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <div class="welcomeTitle" id="welcomeTitle">Welcome</div>
+      <div class="welcomeSub">Set your name once — you can change it anytime.</div>
+      <div class="welcomeForm">
+        <input class="welcomeInput" id="nameInput" type="text" inputmode="text" autocomplete="name" placeholder="Your name" maxlength="32" />
+        <button class="welcomeBtn" id="saveName" type="button">Enter</button>
+      </div>
+      <div class="welcomeHint">Tip: press Enter to continue.</div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="userbox">
+          <div class="avatar" id="avatar" aria-hidden="true">U</div>
+          <div class="tab" id="welcomeUser">
+            Welcome <span id="username"></span>
+            <span id="editName" class="editName" title="Change name" aria-label="Change name">⚙</span>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="lukeCredit">Designed by Luke Vella</div>
+        <button class="themeBtn" id="themeBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Theme">Theme</button>
+        <div class="themeMenu" id="themeMenu" role="menu" aria-label="Theme menu">
+          <button class="themeSwatch" data-theme="white"  role="menuitem" type="button" aria-label="White theme"  title="White"></button>
+          <button class="themeSwatch" data-theme="grey"   role="menuitem" type="button" aria-label="Grey theme"   title="Grey"></button>
+          <button class="themeSwatch" data-theme="black"  role="menuitem" type="button" aria-label="Black theme"  title="Black"></button>
+          <button class="themeSwatch" data-theme="blue"   role="menuitem" type="button" aria-label="Blue theme"   title="Blue"></button>
+          <button class="themeSwatch" data-theme="red"    role="menuitem" type="button" aria-label="Red theme"    title="Red"></button>
+          <button class="themeSwatch" data-theme="purple" role="menuitem" type="button" aria-label="Purple theme" title="Purple"></button>
+          <button class="themeSwatch" data-theme="green"  role="menuitem" type="button" aria-label="Green theme"  title="Green"></button>
+          <button class="themeSwatch" data-theme="yellow" role="menuitem" type="button" aria-label="Yellow theme" title="Yellow"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="strip" role="tablist" aria-label="Top navigation tiles">
+      <div class="tilewrap">
+        <button class="tile" data-key="home" type="button" role="tab" aria-selected="false" tabindex="-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 13.5V6.8A2.8 2.8 0 0 1 6.8 4h10.4A2.8 2.8 0 0 1 20 6.8v10.4A2.8 2.8 0 0 1 17.2 20H10.5"></path>
+            <path d="M4 17h6"></path>
+            <path d="M4 20h4"></path>
+            <path d="M13 8h4"></path>
+            <path d="M13 11h4"></path>
+          </svg>
+        </button>
+        <div class="tile-label">Home</div>
+      </div>
+
+
+      <div class="tilewrap">
+        <button class="tile" data-key="departments" type="button" role="tab" aria-selected="false" tabindex="0">
+          <span class="badge" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V7l8-4Z"></path>
+            <path d="M9 12h6"></path>
+            <path d="M12 9v6"></path>
+          </svg>
+        </button>
+        <div class="tile-label">Departments</div>
+      </div>
+
+      <div class="tilewrap">
+        <button class="tile" data-key="msadmin" type="button" role="tab" aria-selected="false" tabindex="-1">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <rect x="4" y="4" width="7" height="7" rx="2"></rect>
+            <rect x="13" y="4" width="7" height="7" rx="2"></rect>
+            <rect x="4" y="13" width="7" height="7" rx="2"></rect>
+            <rect x="13" y="13" width="7" height="7" rx="2"></rect>
+          </svg>
+        </button>
+        <div class="tile-label">Company Resources</div>
+      </div>
+
+      <div class="tilewrap">
+        <button class="tile" data-key="tools" type="button" role="tab" aria-selected="false" tabindex="-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18l3 3 5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-2.5-2.5 2.5-2.5-3-3Z"></path>
+          </svg>
+        </button>
+        <div class="tile-label">Tools</div>
+      </div>
+</div>
+
+    <div class="pop" id="pop" aria-live="polite">
+      <div class="popBody" id="popBody"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Department Submenu Overlay -->
+  <div class="subOverlay" id="subOverlay" aria-hidden="true">
+    <div class="subCard" role="dialog" aria-modal="true" aria-labelledby="subTitle">
+      <div class="subTop">
+        <div class="subTitle" id="subTitle">Department</div>
+        <button class="subClose" id="subClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="subGrid" id="subGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    // Clock removed (theme menu used instead)
+
+    // Theme menu (persistent)
+    const themeBtn = document.getElementById('themeBtn');
+    const themeMenu = document.getElementById('themeMenu');
+    const themeItems = Array.from(document.querySelectorAll('.themeSwatch'));
+
+    function setTheme(t){
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('intranetTheme', t);
+    }
+
+    function loadTheme(){
+      const saved = localStorage.getItem('intranetTheme') || 'black';
+      setTheme(saved);
+    }
+
+    function closeThemeMenu(){
+      themeMenu.classList.remove('open');
+      themeBtn.setAttribute('aria-expanded','false');
+    }
+
+    themeBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const open = themeMenu.classList.toggle('open');
+      themeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    themeItems.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        setTheme(btn.dataset.theme);
+        closeThemeMenu();
+      });
+    });
+
+    document.addEventListener('click', (e)=>{
+      if(!themeMenu.contains(e.target) && e.target !== themeBtn){
+        closeThemeMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){ closeThemeMenu(); }
+    });
+
+    // Department submenu (blur + pop tiles)
+    const subOverlay = document.getElementById('subOverlay');
+    const subGrid = document.getElementById('subGrid');
+    const subTitleEl = document.getElementById('subTitle');
+    const subClose = document.getElementById('subClose');
+
+    function openSubmenu(title, children){
+      subTitleEl.textContent = title || 'Department';
+      subGrid.innerHTML = '';
+      (children||[]).forEach(ch=>{
+        const b = document.createElement('a');
+        b.className = 'subTile';
+        b.href = ch.href || '#';
+        b.target = '_self';
+        b.rel = 'noopener noreferrer';
+        b.textContent = ch.title || '';
+
+        // Smart protocol handling for Teams / Copilot / OpenVPN
+        b.addEventListener('click', (e)=>{
+          if(openSmartLink(b.href)){ e.preventDefault(); return; }
+        });
+
+        subGrid.appendChild(b);
+      });
+      document.body.classList.add('subOpen');
+      subOverlay.classList.add('show');
+      subOverlay.setAttribute('aria-hidden','false');
+    }
+
+    function closeSubmenu(){
+      subOverlay.classList.remove('show');
+      subOverlay.setAttribute('aria-hidden','true');
+      setTimeout(()=> document.body.classList.remove('subOpen'), 220);
+    }
+
+    subClose.addEventListener('click', closeSubmenu);
+    subOverlay.addEventListener('click', (e)=>{ if(e.target === subOverlay) closeSubmenu(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && subOverlay.classList.contains('show')) closeSubmenu(); });
+
+
+    function launchProtocol(url){
+      if(!url) return false;
+      try{
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        setTimeout(()=> iframe.remove(), 1500);
+        return true;
+      }catch(e){
+        try { window.location.href = url; return true; } catch(err){}
+      }
+      return false;
+    }
+
+    function openExternalInEdge(url){
+      if(!url) return false;
+      try{
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer external';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(()=> a.remove(), 0);
+        return true;
+      }catch(e){
+        try { window.open(url, '_blank', 'noopener,noreferrer'); return true; } catch(err){}
+      }
+      return false;
+    }
+
+    function openSmartLink(url){
+      if(!url) return false;
+
+      // Teams (New Teams): use HTTPS deep links, with msteams fallback
+      if(/^https:\/\/teams\.microsoft\.com\//i.test(url)){
+        const proto = url.replace(/^https:\/\/teams\.microsoft\.com/i, 'msteams:');
+        try { window.location.href = proto; } catch(e){}
+        setTimeout(()=>{ try{ openExternalInEdge(url); } catch(e){} }, 700);
+        return true;
+      }
+
+      // Windows Copilot (if available)
+      if(/^ms-copilot:\/\//i.test(url)){
+        try { window.location.href = url; } catch(e){}
+        setTimeout(()=>{ try{ openExternalInEdge('https://copilot.microsoft.com/'); } catch(e){} }, 700);
+        return true;
+      }
+
+      // OpenVPN: launch the protocol only and stay on the intranet page
+      if(/^openvpn:\/\//i.test(url)){
+        return launchProtocol(url);
+      }
+
+      return false;
+    }
+
+
+    loadTheme();
+    // User name (welcome overlay + persistent + editable)
+    const usernameEl = document.getElementById('username');
+    const editNameEl = document.getElementById('editName');
+    const avatarEl = document.getElementById('avatar');
+
+    const welcomeOverlay = document.getElementById('welcomeOverlay');
+    const nameInput = document.getElementById('nameInput');
+    const saveNameBtn = document.getElementById('saveName');
+
+    function initialsFrom(name){
+      const parts = String(name||'').trim().split(/\s+/).filter(Boolean);
+      if(parts.length === 0) return 'U';
+      const a = parts[0][0] || 'U';
+      const b = (parts.length > 1 ? parts[parts.length-1][0] : '') || '';
+      return (a + b).toUpperCase();
+    }
+
+    function applyUser(name){
+      const safe = (name && String(name).trim()) ? String(name).trim() : 'User';
+      usernameEl.textContent = safe;
+      avatarEl.textContent = initialsFrom(safe);
+    }
+
+    function openWelcome(prefill){
+      document.body.classList.add('hasWelcome');
+      welcomeOverlay.classList.add('show');
+      welcomeOverlay.setAttribute('aria-hidden','false');
+      nameInput.value = (prefill && String(prefill).trim()) ? String(prefill).trim() : '';
+      requestAnimationFrame(()=> setTimeout(()=> nameInput.focus(), 60));
+    }
+
+    function closeWelcome(){
+      welcomeOverlay.classList.remove('show');
+      welcomeOverlay.setAttribute('aria-hidden','true');
+      const dur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fadeDur')) || 520;
+      setTimeout(()=> document.body.classList.remove('hasWelcome'), Math.max(260, dur));
+    }
+
+    function saveName(){
+      const v = String(nameInput.value || '').trim();
+      const name = v ? v : 'User';
+      localStorage.setItem('intranetUserName', name);
+      applyUser(name);
+      closeWelcome();
+    }
+
+    function loadUser(){
+      const stored = localStorage.getItem('intranetUserName');
+      if(!stored){
+        openWelcome('');
+      } else {
+        applyUser(stored);
+      }
+    }
+
+    saveNameBtn.addEventListener('click', saveName);
+    nameInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); saveName(); } });
+
+    editNameEl.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const current = localStorage.getItem('intranetUserName') || usernameEl.textContent || '';
+      openWelcome(current);
+    });
+
+    loadUser();
+
+    // background images per section (used by the cross-fade engine)
+const BG_BY_KEY = {
+  home:        "https://stingraymanufacturers.github.io/departmenttiles/home.webp",
+  departments: "https://stingraymanufacturers.github.io/departmenttiles/departments.webp",
+  msadmin:     "https://stingraymanufacturers.github.io/departmenttiles/companyresources.webp",
+  tools:       "https://stingraymanufacturers.github.io/departmenttiles/newtools.webp"
+};
+// background cross-fade engine (New: two-layer fade, no flicker)
+const bgL1 = document.getElementById("bgLayer1");
+const bgL2 = document.getElementById("bgLayer2");
+let activeLayer = 1;
+
+// preload images
+const _preloaded = new Map();
+function preload(url){
+  if(!url) return Promise.resolve();
+  if(_preloaded.has(url)) return _preloaded.get(url);
+  const p = new Promise((res)=>{
+    const img = new Image();
+    img.onload = ()=>res(true);
+    img.onerror = ()=>res(false);
+    img.src = url;
+  });
+  _preloaded.set(url, p);
+  return p;
+}
+Object.values(BG_BY_KEY).forEach(preload);
+
+let bgSwapToken = 0;
+async function setBg(key){
+  const url = BG_BY_KEY[key];
+  if(!url) return;
+
+  const token = ++bgSwapToken;
+  await preload(url);
+  if(token !== bgSwapToken) return;
+
+  const incoming = (activeLayer === 1) ? bgL2 : bgL1;
+  const outgoing = (activeLayer === 1) ? bgL1 : bgL2;
+
+  incoming.style.backgroundImage = `url("${url}")`;
+  incoming.classList.add("active");
+  outgoing.classList.remove("active");
+
+  activeLayer = (activeLayer === 1) ? 2 : 1;
+}
+
+    const sections = {
+      home: { type: "home" },
+departments: { type: "tiles", items: [
+        { title: "IT Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/it-hover.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/IT-Department-Hub.aspx", pos: "center 8%" },
+        { title: "Executives", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/executive1.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Executives-Hub.aspx" },
+        { title: "Admin Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/admin.webp", href: "#", children: [
+          { title: "Sales", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub.aspx" },
+          { title: "Debtors", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Debtors-Department-Hub.aspx" },
+          { title: "JHB Admin", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub-JHB.aspx" }
+        ] },
+        { title: "Service Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/service.webp", href: "#", children: [
+          { title: "Cape Town", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Cpt-Service-Department-Hub.aspx" },
+          { title: "Johannesburg", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/JHB-Service-Department-Hub.aspx" }
+        ] },
+        { title: "Planning Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/planning.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Planning-Department-Hub.aspx" },
+        { title: "Art Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/art.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Art-Department-Hub.aspx" },
+        { title: "Shipping Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/shipping.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Shipping-Department-Hub.aspx" },
+        { title: "E-com Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/e-com.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/E-com-Department-Hub.aspx" },
+        { title: "Human Resources", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/admin-hover.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Human-Resources-Hub.aspx" },
+        { title: "Finance Department", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/shipping-hover.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Finance-Department-Hub.aspx" },
+        { title: "Quality Control", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/quality.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Quality-Control-Hub.aspx" },
+        { title: "Warehouse", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/warehouse.webp", href: "#", children: [
+          { title: "Production", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Production-Department-Hub.aspx" },
+          { title: "Dispatch", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Invoicing-Hub.aspx" },
+          { title: "Receiving", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Receiving-Department-Hub.aspx" },
+          { title: "Finished Goods", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/FG-Stores-Hub.aspx" }
+        ] },
+        { title: "Training", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/training.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Training%20Library/Forms/AllItems.aspx?npsAction=createList" },
+        { title: "Operations", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/training-hover.webp", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Operations-Hub.aspx" },
+        { title: "KAMs & Reps", desc: "", img: "https://stingraymanufacturers.github.io/departmenttiles/e-com-hover.webp", href: "#", children: [
+          { title: "KAMs", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/KAMs-Hub.aspx" },
+          { title: "Reps", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Sales-Reps-Hub.aspx" }
+        ] }
+      ] },
+
+      msadmin: { type:"tiles", items: [
+  { title: "Employee of the Month", desc: "", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Employee-of-the-month.aspx", img: "https://stingraymanufacturers.github.io/departmenttiles/webemployeeofthemonth.webp" },
+  { title: "Monthly Newsletter", desc: "", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Monthly%20Newsletter/Forms/AllItems.aspx", img: "https://stingraymanufacturers.github.io/departmenttiles/webmonthlynewsletter.webp" },
+  { title: "HR Forms", desc: "", href: "https://stingrayacc.sharepoint.com/sites/StingrayIntranet/HR%20Forms/Forms/AllItems.aspx", img: "https://stingraymanufacturers.github.io/departmenttiles/webhrforms.webp" },
+  { title: "ISO 9001 QMS Documents", desc: "", href: "https://stingrayacc.sharepoint.com/sites/ISO9001QMS/Shared%20Documents/Forms/AllItems.aspx", target: "_blank", img: "https://stingraymanufacturers.github.io/departmenttiles/webisodocs.webp" }
+]},
+      tools: { type: "tiles", items: [
+        { title: "Teams", desc: "", href: "#", action: "teams", img: "https://stingraymanufacturers.github.io/departmenttiles/teams.png" },
+        { title: "Copilot", desc: "", href: "#", action: "copilot", url: "https://m365.cloud.microsoft/chat/?auth=2&home=1&fromcode=cmm6e0ny53n", img: "https://stingraymanufacturers.github.io/departmenttiles/copilot.png" },
+        { title: "OpenVPN", desc: "", href: "openvpn://", action: "link", img: "https://stingraymanufacturers.github.io/departmenttiles/openvpn.png" },
+        { title: "Remote SAP", desc: "", href: "https://remote.stingray.co.za:8100/dispatcher/", action: "link", externalBrowser: true, img: "https://stingraymanufacturers.github.io/departmenttiles/remotesap.png" },
+        { title: "SharePoint", desc: "", href: "https://stingrayacc.sharepoint.com/_layouts/15/sharepoint.aspx", action: "link", externalBrowser: true, img: "https://stingraymanufacturers.github.io/departmenttiles/sharepoint.png" }
+      ] }
+    };
+
+    // DEPT_PRELOAD: warm-cache department images in idle time
+    (function(){
+      try{
+        const urls = (sections.departments && sections.departments.items ? sections.departments.items : [])
+          .map(i=>i.img).filter(Boolean);
+        const run = ()=> urls.forEach(preload);
+        if('requestIdleCallback' in window){
+          requestIdleCallback(run, { timeout: 1200 });
+        } else {
+          setTimeout(run, 250);
+        }
+      }catch(e){}
+    })();
+
+    const pop = document.getElementById('pop');
+    const popBody = document.getElementById('popBody');
+    const wraps = Array.from(document.querySelectorAll('.tilewrap'));
+    const tiles = Array.from(document.querySelectorAll('.tile'));
+
+    const navEl = document.getElementById('topNavCenter');
+    const navBtns = Array.from(document.querySelectorAll('#topNavCenter .navBtn'));
+    const navIndicator = document.getElementById('navIndicator');
+
+    function moveNavIndicatorTo(btn){
+      if(!btn || !navIndicator) return;
+      const navRect = navEl.getBoundingClientRect();
+      const b = btn.getBoundingClientRect();
+      const left = (b.left - navRect.left) + (b.width - b.width)/2;
+      navIndicator.style.width = Math.max(26, Math.round(b.width * 0.70)) + 'px';
+      navIndicator.style.transform = `translateX(${Math.round((b.left - navRect.left) + (b.width - parseFloat(navIndicator.style.width||0))/2)}px)`;
+    }
+
+    function syncTopNav(key){
+      const btn = navBtns.find(b=>b.dataset.key===key) || navBtns[0];
+      navBtns.forEach(b=>b.classList.toggle('active', b===btn));
+      moveNavIndicatorTo(btn);
+    }
+
+    function setActiveByKey(key){
+      const idx = tiles.findIndex(t => t.dataset && t.dataset.key === key);
+      if(idx >= 0){ setActive(idx); tiles[idx].focus(); }
+    }
+
+    navBtns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        setActiveByKey(btn.dataset.key);
+      });
+    });
+
+    window.addEventListener('resize', ()=>{
+      const activeKey = (document.querySelector('.tile.active')?.dataset?.key) || 'home';
+      syncTopNav(activeKey);
+    });
+
+
+    
+    
+
+    function applyHomeIntroAnimation(){
+      const headline = popBody.querySelector('[data-charfade]');
+      if(headline){
+        const text = headline.textContent;
+        headline.textContent = '';
+        let delay = 0;
+        for(const ch of text){
+          const span = document.createElement('span');
+          span.className = 'charFade';
+          span.textContent = (ch === ' ' ? '\u00A0' : ch);
+          span.style.animationDelay = (delay*0.018).toFixed(3) + 's';
+          headline.appendChild(span);
+          delay += (ch === ' ' ? 1.6 : 1);
+        }
+
+    // Reusable: split text into charFade spans with staggered delays
+    function splitIntoCharFade(el, baseDelaySec){
+      if(!el) return;
+      if(el.dataset && el.dataset.charSplit === "1") return;
+      const text = el.textContent || "";
+      el.textContent = "";
+      let delay = 0;
+      for(const ch of text){
+        const span = document.createElement('span');
+        span.className = 'charFade';
+        span.textContent = (ch === ' ' ? '\u00A0' : ch);
+        const d = (baseDelaySec || 0) + (delay*0.018);
+        span.style.animationDelay = d.toFixed(3) + 's';
+        el.appendChild(span);
+        delay += (ch === ' ' ? 1.6 : 1);
+      }
+      if(el.dataset) el.dataset.charSplit = "1";
+    }
+
+    // Animate tiles in any tile-based section using the same charFade feel as the Home intro
+    function applyTilesCharFade(){
+      const tiles = popBody.querySelectorAll('.subtile');
+      tiles.forEach((tile, i)=>{
+        tile.classList.add('tileFade');
+        tile.style.animationDelay = (i * 0.075).toFixed(3) + 's';
+
+        const label = tile.querySelector('.deptTitle, .toolLabel');
+        if(label){
+          // give each tile label a base delay so the card appears first, then letters
+          splitIntoCharFade(label, (i * 0.075) + 0.10);
+        }
+      });
+    }
+      }
+
+      const blocks = popBody.querySelectorAll('[data-fadeblock]');
+      blocks.forEach((el, i)=>{
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(10px)';
+        el.style.transition = 'opacity .55s ease, transform .55s ease';
+        const ms = 320 + (i*140);
+        setTimeout(()=>{
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, ms);
+      });
+    }
+
+    function applyTilesAnim(){
+      const tiles = Array.from(popBody.querySelectorAll('.subtile'));
+      const isTools = popBody.classList.contains('toolsArea');
+      tiles.forEach((t,i)=>{
+        t.classList.remove('tileWipe','tileFadeOnly');
+        t.style.animationDelay = '';
+        void t.offsetWidth; // reflow so animation can replay
+        t.style.animationDelay = (i * 70) + 'ms';
+        t.classList.add(isTools ? 'tileFadeOnly' : 'tileWipe');
+      });
+    }
+function openTeamsOverlay(){
+      fadePopTo(()=>{
+        popTitle.textContent = "Teams";
+        popBody.classList.remove("grid5","autoGrid","resources","toolsArea");
+        popBody.innerHTML = `
+          <div class="glassPanel" style="max-width:980px;">
+            <div style="font-weight:880;font-size:18px;margin-bottom:10px;">Quick Actions</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;">
+              <a class="subtile" href="#" data-teams="meeting" target="_blank" rel="noopener noreferrer">
+                <div class="t">Create a Meeting</div>
+                <div class="d">Schedule a meeting in Teams.</div>
+              </a>
+              <a class="subtile" href="#" data-teams="calendar" target="_blank" rel="noopener noreferrer">
+                <div class="t">Calendar</div>
+                <div class="d">Open your Teams calendar.</div>
+              </a>
+              <a class="subtile" href="#" data-teams="chat" target="_blank" rel="noopener noreferrer">
+                <div class="t">New Chat</div>
+                <div class="d">Start a new chat.</div>
+              </a>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+function renderTiles(items){
+      popBody.innerHTML = "";
+      const list = (items || []);
+      const isTools = (currentSectionKey === "tools");
+
+      const frag = document.createDocumentFragment();
+
+      for(const item of list){
+        const a = document.createElement('a');
+        a.className = "subtile" + (isTools ? " toolCircle" : " deptTile");
+        a.href = item.href || "#";
+        a.rel = "noopener noreferrer";
+
+        if(isTools && item.action === "copilot") a.id = "copilotTool";
+        if(isTools && item.action === "teams") a.id = "teamsTool";
+
+        // Departments submenu
+        if(!isTools && item.children && item.children.length){
+          a.dataset.children = JSON.stringify(item.children);
+          a.dataset.title = item.title || "Department";
+          a.addEventListener("click", (e)=>{
+            e.preventDefault();
+            openSubmenu(a.dataset.title, JSON.parse(a.dataset.children));
+          });
+        }
+
+        // Tools actions
+        if(isTools && item.action === "teams"){
+          a.target = "_self";
+          a.addEventListener("click", (e)=>{ e.preventDefault(); openTeamsOverlay(); });
+        } else if(isTools && item.action === "copilot"){
+          a.target = "_self";
+          a.addEventListener("click", (e)=>{ e.preventDefault(); }); // handled by popup binder
+        } else {
+          const href = a.href || "";
+          if(/^https?:\/\//i.test(href)){
+            if(item.externalBrowser){
+              a.target = "_blank";
+              a.addEventListener("click", (e)=>{ e.preventDefault(); openExternalInEdge(href); });
+            } else if(currentSectionKey === "departments"){
+              a.target = "_self";
+              a.addEventListener("click", (e)=>{ e.preventDefault(); window.location.href = href; });
+            } else {
+              a.target = "_blank";
+              a.addEventListener("click", (e)=>{ e.preventDefault(); window.open(href, "_blank", "noopener"); });
+            }
+          } else {
+            a.target = "_self";
+            a.addEventListener("click", (e)=>{ if(openSmartLink(href)){ e.preventDefault(); } });
+          }
+        }
+
+        if(isTools){
+          if(item.img){
+            a.style.backgroundImage = `url('${item.img}')`;
+          }
+          const t = document.createElement('div');
+          t.className = 'toolLabel';
+          t.textContent = item.title || '';
+          a.appendChild(t);
+        } else {
+          if(item.img){
+            const img = document.createElement('img');
+            img.className = 'deptImg';
+            img.alt = item.title || '';
+            img.loading = 'eager';
+            img.decoding = 'async';
+            img.fetchPriority = 'high';
+            img.src = item.img;
+            if(item.pos) img.style.objectPosition = item.pos;
+            a.appendChild(img);
+          }
+          const t = document.createElement('div');
+          t.className = 'deptTitle';
+          t.textContent = item.title || '';
+          a.appendChild(t);
+        }
+
+        frag.appendChild(a);
+      }
+
+      popBody.appendChild(frag);
+
+      if(!list.length){
+        const e=document.createElement("div");
+        e.style.opacity = ".7";
+        e.style.padding = "18px 6px";
+        e.textContent = "Nothing here yet.";
+        popBody.appendChild(e);
+      }
+
+      // Apply stagger + letter-by-letter fade for this tile view
+      requestAnimationFrame(()=>applyTilesAnim());
+
+    }
+
+    // smooth content fade when switching sections
+    let popToken = 0;
+    function fadePopTo(renderFn){
+      const token = ++popToken;
+      pop.classList.add('show');
+
+      // Smooth fade + slight slide from below (less glitchy for grid)
+      popBody.style.willChange = 'opacity, transform';
+      popBody.style.transition = 'opacity 220ms var(--fadeEase), transform 220ms var(--fadeEase)';
+      popBody.style.opacity = '0';
+      popBody.style.transform = 'translateY(12px)';
+
+      // Wait a frame so the browser commits the outgoing state
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          if(token !== popToken) return;
+          renderFn();
+
+          // Enter state
+          popBody.style.opacity = '1';
+          popBody.style.transform = 'translateY(0)';
+        });
+      });
+    }
+
+    function renderSection(key){
+      currentSectionKey = key;
+      const cfg=sections[key];
+      if(!cfg) return;
+
+      // Departments layout: 15 tiles in a tight 5-column grid
+      popBody.classList.toggle('grid5', key === 'departments');
+      popBody.classList.toggle('autoGrid', ['msadmin','tools'].includes(key));
+      popBody.classList.toggle('resources', key === 'msadmin');
+      popBody.classList.toggle('toolsArea', key === 'tools');
+document.body.classList.toggle('departmentsMode', key === 'departments');
+
+      if(cfg.type==="tiles"){
+        return fadePopTo(()=>renderTiles(cfg.items));
+      }
+      if(cfg.type==="home"){
+        return fadePopTo(()=>{ popBody.innerHTML = `
+<div class="homeIntro" style="text-align:center;">
+  <div class="headline" data-charfade>Welcome to the Stingray Intranet</div>
+
+  <div class="subcopy" data-fadeblock>
+  This is your quick-launch hub for everything inside Stingray. Use the sections above to access departments, company resources, and important tools used across the business.
+  </div>
+
+  <div class="guideGrid" data-fadeblock>
+    <div class="guideCard">
+      <div class="t">Departments</div>
+      <div class="d">Open each department hub to find team info, key contacts, processes, and the latest updates for that area of the business.</div>
+    </div>
+    <div class="guideCard">
+      <div class="t">Company Resources</div>
+      <div class="d">Quick access to shared resources like HR forms, monthly newsletters, Employee of the Month content, and ISO documents.</div>
+    </div>
+    <div class="guideCard">
+      <div class="t">Tools</div>
+      <div class="d">Launch the core apps you use every day — Teams, Copilot, OpenVPN, Remote SAP, and SharePoint — from one place.</div>
+    </div>
+  </div>
+
+
+  <div class="headline socialHeading" data-charfade style="margin-top:40px;">Social Media</div>
+
+  <div class="socialIcons" data-fadeblock>
+    <a href="https://instagram.com/thestingraygroup/" target="_blank" class="socialBtn">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png">
+    </a>
+    <a href="https://www.facebook.com/TheStingrayGroup" target="_blank" class="socialBtn">
+      <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png">
+    </a>
+    <a href="https://www.youtube.com/@thestingraygroup" target="_blank" class="socialBtn">
+      <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png">
+    </a>
+  </div>
+</div>
+
+`;
+          applyHomeIntroAnimation(); });
+      }
+
+      if(cfg.type==="tasks"){
+        return fadePopTo(()=>{ popBody.innerHTML = `<div class="glassPanel">Tasks panel goes here (kept from your previous version).</div>`; });
+      }
+    }
+
+    function setActive(idx){
+      wraps.forEach((w,i)=> w.classList.toggle('active', i===idx));
+      tiles.forEach((t,i)=>{
+        const on=i===idx;
+        if(t.tagName === "A") return;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on?'true':'false');
+        t.tabIndex = on ? 0 : -1;
+      });
+
+      const key = tiles[idx].dataset.key;
+      if(key){
+        document.body.classList.toggle('homeMode', key === 'home');
+        setBg(key);
+        renderSection(key);
+        syncTopNav(key);
+        setScrollNavActive(key);
+      }
+    }
+
+    tiles.forEach((tile, idx)=>{
+      if(tile.tagName === "A") return;
+      tile.addEventListener('click', ()=> setActive(idx));
+      tile.addEventListener('keydown', (e)=>{
+        if(e.key==='ArrowRight'){ e.preventDefault(); const n=(idx+1)%tiles.length; setActive(n); tiles[n].focus(); }
+        if(e.key==='ArrowLeft'){ e.preventDefault(); const p=(idx-1+tiles.length)%tiles.length; setActive(p); tiles[p].focus(); }
+        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); setActive(idx); }
+      });
+    });
+
+
+    // subtle parallax background scroll
+    (function(){
+      const speed = 0.12; // lower = more subtle
+      const apply = ()=>{
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        document.documentElement.style.setProperty('--bgParallax', `${Math.round(y * -speed)}px`);
+      };
+      window.addEventListener('scroll', apply, { passive:true });
+      window.addEventListener('resize', apply);
+      apply();
+    })();
+
+    // Teams web-only quick actions (prevents classic Teams protocol error)
+    function openTeamsDeepLink(webUrl){
+      if(!webUrl) return;
+      // Try New Teams desktop app (msteams:) and fall back to web if not installed
+      const proto = webUrl.replace(/^https:\/\/teams\.microsoft\.com/i, "msteams:");
+      try { window.location.href = proto; } catch(e) {}
+      setTimeout(()=>{ try { window.open(webUrl, "_blank", "noopener"); } catch(e) {} }, 750);
+    }
+    document.addEventListener("click", (e)=>{
+      const el = e.target.closest("[data-teams]");
+      if(!el) return;
+      e.preventDefault();
+      const kind = el.getAttribute("data-teams");
+
+      if(kind === "calendar"){
+        openTeamsDeepLink("https://teams.microsoft.com/_#/calendarv2");
+        return;
+      }
+      if(kind === "chat"){
+        openTeamsDeepLink("https://teams.microsoft.com/_#/conversations/newchat");
+        return;
+      }
+      openTeamsDeepLink("https://teams.microsoft.com/l/meeting/new?subject=");
+    });
+
+// Tile actions (Teams submenu + Copilot sidebar)
+    document.addEventListener("click", (e)=>{
+      const a = e.target.closest(".subtile");
+      if(!a) return;
+
+      // Identify the tile by text label (stable in this UI)
+      const label = a.querySelector(".t")?.textContent?.trim();
+
+      // Copilot: open sidebar instead of new tab
+      if(label === "Copilot"){
+        e.preventDefault();
+        e.stopPropagation();
+        openCopilot("https://m365.cloud.microsoft/chat/?auth=2&home=1&fromcode=cmm55a4s0sl&origindomain=microsoft365");
+        return;
+      }
+
+      // Teams: open a small popup panel with 3 actions
+      if(label === "Teams"){
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Build a mini popup using your existing pop system
+        fadePopTo(()=>{
+          popBody.classList.remove("grid5","resources");
+          popTitle.textContent = "Teams";
+
+          popBody.innerHTML = `
+            <div class="glassPanel" style="max-width:980px;">
+              <div style="font-weight:880;font-size:18px;margin-bottom:10px;">Quick Actions</div>
+              <div style="display:flex;gap:14px;flex-wrap:wrap;">
+                <a class="subtile" href="#" data-teams="meeting">
+                  <div class="t">Create a Meeting</div>
+                  <div class="d">Schedule a meeting in Teams.</div>
+                </a>
+                <a class="subtile" href="#" data-teams="calendar">
+                  <div class="t">Calendar</div>
+                  <div class="d">Open your Teams calendar.</div>
+                </a>
+                <a class="subtile" href="#" data-teams="chat">
+                  <div class="t">New Chat</div>
+                  <div class="d">Start a new chat.</div>
+                </a>
+              </div>
+            </div>
+          `;
+        });
+        return;
+      }
+    });
+
+    // Handle Teams submenu actions (always new tabs; new Teams compatible)
+    document.addEventListener("click", (e)=>{
+      const el = e.target.closest("[data-teams]");
+      if(!el) return;
+      e.preventDefault();
+      const kind = el.getAttribute("data-teams");
+
+      if(kind === "calendar"){
+        openTeamsDeepLink("https://teams.microsoft.com/_#/calendarv2", "msteams:/l/calendar/");
+        return;
+      }
+      if(kind === "chat"){
+        openTeamsDeepLink("https://teams.microsoft.com/_#/conversations/newchat", "msteams:/l/chat/0/0");
+        return;
+      }
+      // Create a meeting
+      openTeamsDeepLink("https://teams.microsoft.com/l/meeting/new?subject=", "msteams:/l/meeting/new");
+    });
+
+
+
+    // OpenVPN protocol handler reliability
+    document.addEventListener("click", (e)=>{
+      const a = e.target.closest(".subtile");
+      if(!a) return;
+      const label = a.querySelector(".t")?.textContent?.trim();
+      if(label !== "OpenVPN") return;
+      e.preventDefault();
+      launchProtocol("openvpn://");
+    });
+
+
+
+    // ===== Teams: open mini tools overlay above tile =====
+    function openTeamsOverlay(){
+      const teamsTool = document.getElementById('teamsTool');
+      const overlay = document.getElementById('teamsOverlay');
+      const rail = document.getElementById('teamsFabRail');
+      if(!teamsTool || !overlay || !rail) return;
+
+      function positionOverlay(){
+        const r = teamsTool.getBoundingClientRect();
+        const wrap = overlay.querySelector('.teams-fab-wrap');
+        if(!wrap) return;
+        const top = Math.max(90, r.top - 120);
+        wrap.style.top = top + 'px';
+      }
+
+      function openOverlay(e){
+        if(e){
+          e.preventDefault();
+          e.stopPropagation();
+          if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+        }
+        positionOverlay();
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden','false');
+        rail.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeOverlay(){
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden','true');
+        rail.setAttribute('aria-hidden','true');
+        document.body.style.overflow = '';
+      }
+
+      teamsTool.addEventListener('click', openOverlay, true);
+
+      overlay.addEventListener('click', (e)=>{
+        const close = e.target.closest('[data-close="teams"]');
+        if(close) closeOverlay();
+        // click outside rail closes too
+        if(e.target === overlay) closeOverlay();
+      });
+
+      window.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && overlay.classList.contains('is-open')) closeOverlay();
+      });
+
+      window.addEventListener('resize', ()=>{
+        if(overlay.classList.contains('is-open')) positionOverlay();
+      }, { passive:true });
+
+      window.addEventListener('scroll', ()=>{
+        if(overlay.classList.contains('is-open')) positionOverlay();
+      }, { passive:true });
+    }
+
+    // init teams overlay binding
+    (function(){ openTeamsOverlay(); })();
+
+
+    // start on Departments background
+    setBg("home");
+    setActive(0);
+
+    
+
+// ===== Copilot: open in side window only (reuse same window) =====
+  (function(){
+    const COPILOT_URL = "https://m365.cloud.microsoft/chat/?auth=2&home=1&fromcode=cmm6e0ny53n";
+    let copilotWin = null;
+
+    function openCopilotPopup(){
+      const w = 520;
+      const h = Math.min(900, Math.max(640, window.screen.height - 120));
+      const left = Math.max(0, window.screenX + window.outerWidth - w - 18);
+      const top  = Math.max(0, window.screenY + 60);
+
+      const features = [
+        "popup=yes",
+        "noopener=yes",
+        "noreferrer=yes",
+        "width=" + w,
+        "height=" + h,
+        "left=" + left,
+        "top=" + top,
+        "resizable=yes",
+        "scrollbars=yes"
+      ].join(",");
+
+      if(copilotWin && !copilotWin.closed){
+        try{ copilotWin.focus(); return; }catch(e){}
+      }
+
+      copilotWin = window.open(COPILOT_URL, "stingrayCopilot", features);
+      if(copilotWin){ try{ copilotWin.focus(); }catch(e){} }
+    }
+
+    function bind(){
+      document.addEventListener("click", function(e){
+        const openTile = e.target && e.target.closest ? e.target.closest("#copilotTool") : null;
+        if(openTile){
+          e.preventDefault();
+          openCopilotPopup();
+          return;
+        }
+      }, true);
+    }
+
+    if(document.readyState === "loading"){
+      document.addEventListener("DOMContentLoaded", bind);
+    }else{
+      bind();
+    }
+  })(); 
+
+</script>
+
+  <!-- Teams quick actions overlay -->
+  <div class="teams-overlay" id="teamsOverlay" aria-hidden="true">
+    <div class="teams-fab-wrap">
+      <div class="teams-fab-rail" id="teamsFabRail" aria-hidden="true">
+        <a class="teams-fab" href="#" data-teams="meeting" title="Create a Meeting">
+          <span class="teams-fab-ico">📅</span><span class="teams-fab-label">Start Meeting</span>
+        </a>
+        <a class="teams-fab" href="#" data-teams="calendar" title="Calendar">
+          <span class="teams-fab-ico">🗓️</span><span class="teams-fab-label">Calendar</span>
+        </a>
+        <a class="teams-fab" href="#" data-teams="chat" title="New Chat">
+          <span class="teams-fab-ico">💬</span><span class="teams-fab-label">New Chat</span>
+        </a>
+      </div>
+      <button class="teams-fab-close" type="button" data-close="teams" aria-label="Close Teams menu">✕</button>
+    </div>
+  </div>
+
+
+<script>
+(function(){
+  const toolsArea = document.querySelector('.popBody.toolsArea') || document.getElementById('popBody');
+
+  function bindMagnetic(root){
+    if(!root) return;
+    const getTools = () => Array.from(root.querySelectorAll('.subtile.toolCircle'));
+    let raf = null;
+
+    function clearState(){
+      root.classList.remove('is-magnetic');
+      getTools().forEach(el => {
+        el.classList.remove('near','far');
+        el.style.removeProperty('--toolScale');
+      });
+    }
+
+    function applyProximity(mx, my){
+      const tools = getTools();
+      if(!tools.length) return;
+      root.classList.add('is-magnetic');
+
+      tools.forEach(el => {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dx = mx - cx;
+        const dy = my - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        el.classList.remove('near','far');
+        if(dist < 90){
+          el.classList.add('near');
+        } else if(dist < 170){
+          el.classList.add('far');
+        }
+      });
+    }
+
+    root.addEventListener('mousemove', (e) => {
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => applyProximity(e.clientX, e.clientY));
+    });
+
+    root.addEventListener('mouseleave', clearState);
+
+    // Also clear when switching sections/tabs so no stale visual state remains
+    document.addEventListener('click', (e) => {
+      const t = e.target.closest('[data-key]');
+      if(t && t.getAttribute('data-key') !== 'tools') clearState();
+    });
+  }
+
+  // Delay slightly so existing page scripts finish building the tools section
+  window.addEventListener('load', () => {
+    const candidate = document.querySelector('.popBody.toolsArea') || document.getElementById('popBody');
+    bindMagnetic(candidate);
+  });
+})();
+</script>
+
+
+<script>
+/* ===== Make section backgrounds feel alive ===== */
+(function(){
+  const layers = [document.getElementById('bgLayer1'), document.getElementById('bgLayer2')].filter(Boolean);
+  if(!layers.length) return;
+
+  let tx = 0, ty = 0, cx = 0, cy = 0, raf = null;
+
+  function setTargetFromPointer(clientX, clientY){
+    const x = (clientX / window.innerWidth) - 0.5;
+    const y = (clientY / window.innerHeight) - 0.5;
+    tx = x * 14;   // gentle horizontal drift
+    ty = y * 10;   // gentle vertical drift
+    kick();
+  }
+
+  function setIdleTarget(){
+    tx = 0;
+    ty = 0;
+    kick();
+  }
+
+  function frame(){
+    cx += (tx - cx) * 0.06;
+    cy += (ty - cy) * 0.06;
+
+    layers.forEach((layer, i) => {
+      const depth = i === 0 ? 1 : 0.7;
+      layer.style.setProperty('--bgmx', (cx * depth).toFixed(2) + 'px');
+      layer.style.setProperty('--bgmy', (cy * depth).toFixed(2) + 'px');
+    });
+
+    if(Math.abs(tx - cx) > 0.02 || Math.abs(ty - cy) > 0.02){
+      raf = requestAnimationFrame(frame);
+    } else {
+      raf = null;
+    }
+  }
+
+  function kick(){
+    if(!raf) raf = requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('mousemove', (e) => setTargetFromPointer(e.clientX, e.clientY), {passive:true});
+  window.addEventListener('mouseleave', setIdleTarget, {passive:true});
+  window.addEventListener('blur', setIdleTarget);
+
+  // subtle autonomous breathing motion even when idle
+  let t = 0;
+  setInterval(() => {
+    if(raf) return;
+    t += 0.6;
+    tx = Math.sin(t) * 2.4;
+    ty = Math.cos(t * 0.8) * 1.8;
+    kick();
+  }, 1600);
+})();
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+
+  const thumb = document.getElementById("scrollThumb");
+  const popBody = document.querySelector(".popBody") || document.body;
+
+  thumb.addEventListener("mousedown", function(e){
+    e.preventDefault();
+
+    function move(ev){
+      const delta = ev.movementY;
+      popBody.scrollBy({
+        top: delta * 8,
+        behavior: "auto"
+      });
+    }
+
+    function stop(){
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", stop);
+    }
+
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", stop);
+  });
+
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btn = document.getElementById("scrollHintBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", function (e) {
+    e.preventDefault();
+
+    const popBody = document.querySelector(".popBody");
+    const pop = document.querySelector(".pop");
+    const shell = document.querySelector(".shell");
+
+    if (popBody && popBody.scrollHeight > popBody.clientHeight) {
+      popBody.scrollBy({ top: 320, behavior: "smooth" });
+      return;
+    }
+
+    if (pop && pop.scrollHeight > pop.clientHeight) {
+      pop.scrollBy({ top: 320, behavior: "smooth" });
+      return;
+    }
+
+    if (shell && shell.scrollHeight > shell.clientHeight) {
+      shell.scrollBy({ top: 320, behavior: "smooth" });
+      return;
+    }
+
+    window.scrollBy({ top: 320, behavior: "smooth" });
+  });
+});
+</script>
+
+</body>
+</html>
