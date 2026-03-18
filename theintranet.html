@@ -262,6 +262,79 @@
     .childModalLink{display:flex;align-items:center;justify-content:center;min-height:120px;padding:18px;border-radius:22px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));color:var(--text);text-decoration:none;font-size:18px;font-weight:780;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.28);transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease}
     .childModalLink:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.42);box-shadow:0 24px 55px rgba(0,0,0,.38),0 0 18px rgba(255,255,255,.16)}
 
+
+    .resourceCard.is-new{position:relative;overflow:hidden}
+    .newBanner{
+      position:absolute;
+      top:12px;
+      right:12px;
+      z-index:4;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:52px;
+      height:28px;
+      background:linear-gradient(180deg, #ff5a6b, #e23145);
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      padding:0 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.28);
+      box-shadow:0 14px 28px rgba(226,49,69,.35), 0 6px 18px rgba(0,0,0,.35);
+      text-shadow:0 2px 6px rgba(0,0,0,.35);
+      pointer-events:none;
+      animation:newPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes newPulse{
+      0%,100%{ transform:scale(1); }
+      50%{ transform:scale(1.06); }
+    }
+
+    .childModalGrid.hasImages{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+    .childModalLink.hasImage{
+      position:relative;
+      min-height:170px;
+      padding:0;
+      overflow:hidden;
+      align-items:flex-end;
+      justify-content:flex-start;
+      border-radius:24px;
+      box-shadow:0 18px 40px rgba(0,0,0,.30);
+      transform:translateY(0) scale(1);
+    }
+    .childModalLink.hasImage:hover{
+      transform:translateY(-6px) scale(1.05);
+      border-color:rgba(255,255,255,.46);
+      box-shadow:0 28px 60px rgba(0,0,0,.42),0 0 20px rgba(255,255,255,.16);
+    }
+    .childModalLinkImg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transform:scale(1.02);
+      transition:transform .35s ease, filter .35s ease;
+    }
+    .childModalLink.hasImage:hover .childModalLinkImg{
+      transform:scale(1.08);
+      filter:saturate(1.06) contrast(1.04) brightness(1.03);
+    }
+    .childModalLinkLabel{
+      position:relative;
+      z-index:2;
+      width:100%;
+      padding:18px 16px;
+      background:linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,.18) 72%, rgba(0,0,0,0));
+      text-align:left;
+      font-size:18px;
+      font-weight:820;
+      text-shadow:0 3px 12px rgba(0,0,0,.92);
+    }
+
     .lukeCredit{position:sticky; margin-left:auto; width:max-content; right:auto; bottom:auto; top:calc(100vh - 40px);z-index:900;font-size:11px;letter-spacing:.25px;text-transform:uppercase;color:rgba(233,238,247,.65);text-shadow:0 4px 14px rgba(0,0,0,.45)}
 
     .welcomeOverlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;z-index:1200;background:radial-gradient(circle at 50% 35%, rgba(255,255,255,.06) 0%, rgba(0,0,0,.58) 55%, rgba(0,0,0,.82) 100%);opacity:0;pointer-events:none;transition:opacity 520ms var(--fadeEase)}
@@ -469,7 +542,7 @@
       { title: 'IT Department', img: 'https://stingraymanufacturers.github.io/departmenttiles/it-hover.webp', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/IT-Department-Hub.aspx', pos: 'center 8%' },
       { title: 'Executives', img: 'https://stingraymanufacturers.github.io/departmenttiles/executive1.webp', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Executives-Hub.aspx' },
       { title: 'Admin Department', img: 'https://stingraymanufacturers.github.io/departmenttiles/admin.webp', href: '#', children: [
-        { title: 'Sales', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub.aspx' },
+        { title: 'Internal Sales', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub.aspx' },
         { title: 'Debtors', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Debtors-Department-Hub.aspx' },
         { title: 'JHB Admin', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Admin-Department-Hub-JHB.aspx' }
       ]},
@@ -485,11 +558,11 @@
       { title: 'Finance Department', img: 'https://stingraymanufacturers.github.io/departmenttiles/shipping-hover.webp', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Finance-Department-Hub.aspx' },
       { title: 'Quality Control', img: 'https://stingraymanufacturers.github.io/departmenttiles/quality.webp', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Quality-Control-Hub.aspx' },
       { title: 'Warehouse', img: 'https://stingraymanufacturers.github.io/departmenttiles/warehouse.webp', href: '#', children: [
-        { title: 'Production', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Production-Department-Hub.aspx' },
-        { title: 'Dispatch', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Invoicing-Hub.aspx' },
-        { title: 'Receiving', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Receiving-Department-Hub.aspx' },
-        { title: 'Finished Goods', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/FG-Stores-Hub.aspx' },
-        { title: 'Heater Assembly', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Heater-Assembly-Hub.aspx' }
+        { title: 'Production', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Production-Department-Hub.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/production.webp' },
+        { title: 'Dispatch', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Invoicing-Hub.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/dispatch.webp' },
+        { title: 'Receiving', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Receiving-Department-Hub.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/receiving.webp' },
+        { title: 'Finished Goods', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/FG-Stores-Hub.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/finishedgoods.webp' },
+        { title: 'Heater Assembly', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Heater-Assembly-Hub.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/heaterassembly.webp' }
       ]},
       { title: 'Training', img: 'https://stingraymanufacturers.github.io/departmenttiles/training.webp', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Training%20Library/Forms/AllItems.aspx?npsAction=createList' },
       { title: 'Operations', img: 'https://stingraymanufacturers.github.io/departmenttiles/training-hover.webp', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Operations-Hub.aspx' },
@@ -500,7 +573,8 @@
       { title: 'Employee of the Month', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Employee-of-the-month.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/webemployeeofthemonth.webp' },
       { title: 'Monthly Newsletter', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/Monthly%20Newsletter/Forms/AllItems.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/webmonthlynewsletter.webp' },
       { title: 'HR Forms', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/HR%20Forms/Forms/AllItems.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/webhrforms.webp' },
-      { title: 'ISO 9001 QMS Documents', href: 'https://stingrayacc.sharepoint.com/sites/ISO9001QMS/Shared%20Documents/Forms/AllItems.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/webisodocs.webp' }
+      { title: 'ISO 9001 QMS Documents', href: 'https://stingrayacc.sharepoint.com/sites/ISO9001QMS/Shared%20Documents/Forms/AllItems.aspx', img: 'https://stingraymanufacturers.github.io/departmenttiles/webisodocs.webp' },
+      { title: 'Team Updates & Announcements', href: 'https://stingrayacc.sharepoint.com/sites/StingrayIntranet/SitePages/Team-Updates-&-Announcements.aspx#marlene-has-relocated-to-cape-town', img: 'https://stingraymanufacturers.github.io/departmenttiles/webmonthlynewsletter.webp', isNewKey: 'teamUpdatesAnnouncements' }
     ];
 
     const tools = [
@@ -585,9 +659,27 @@
       `;
     }
 
+    const NEW_BANNER_HOURS = 24;
+    function shouldShowNewBanner(storageKey){
+      try{
+        const key = `intranetBannerSeen_${storageKey}`;
+        const now = Date.now();
+        const saved = parseInt(localStorage.getItem(key) || '', 10);
+        if(!saved || Number.isNaN(saved)){
+          localStorage.setItem(key, String(now));
+          return true;
+        }
+        return (now - saved) < (NEW_BANNER_HOURS * 60 * 60 * 1000);
+      }catch(err){
+        return true;
+      }
+    }
+
     function renderResourceCard(item){
+      const isNew = item.isNewKey && shouldShowNewBanner(item.isNewKey);
       return `
-        <a class="subtile deptTile resourceCard" href="${item.href}" target="_parent" rel="noopener noreferrer">
+        <a class="subtile deptTile resourceCard ${isNew ? 'is-new' : ''}" href="${item.href}" target="_parent" rel="noopener noreferrer">
+          ${isNew ? '<div class="newBanner">New</div>' : ''}
           <img class="deptImg" src="${item.img}" alt="${item.title}" />
           <div class="deptTitle">${item.title}</div>
         </a>
@@ -685,13 +777,19 @@
 
     function openChildModal(title, items){
       childModalTitle.textContent = title;
-      childModalGrid.innerHTML = items.map(ch => `<a class="childModalLink" href="${ch.href}" target="_parent" rel="noopener noreferrer">${ch.title}</a>`).join('');
+      const hasImages = items.some(ch => ch.img);
+      childModalGrid.classList.toggle('hasImages', hasImages);
+      childModalGrid.innerHTML = items.map(ch => ch.img
+        ? `<a class="childModalLink hasImage" href="${ch.href}" target="_parent" rel="noopener noreferrer"><img class="childModalLinkImg" src="${ch.img}" alt="${ch.title}"><div class="childModalLinkLabel">${ch.title}</div></a>`
+        : `<a class="childModalLink" href="${ch.href}" target="_parent" rel="noopener noreferrer">${ch.title}</a>`
+      ).join('');
       childModal.classList.add('open');
       childModal.setAttribute('aria-hidden','false');
     }
     function closeChildModal(){
       childModal.classList.remove('open');
       childModal.setAttribute('aria-hidden','true');
+      childModalGrid.classList.remove('hasImages');
     }
 
     document.addEventListener('click', (e)=>{
